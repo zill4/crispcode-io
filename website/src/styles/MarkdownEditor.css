@@ -1,0 +1,48 @@
+/* Dark mode styles for SimpleMDE */
+body.dark-mode .EasyMDEContainer {
+    background-color: #2d2d2d;
+  }
+  
+  body.dark-mode .EasyMDEContainer .CodeMirror {
+    background-color: #2d2d2d;
+    color: #ffffff;
+  }
+  
+  body.dark-mode .editor-toolbar {
+    background-color: #3d3d3d;
+    border-color: #4a4a4a;
+  }
+  
+  body.dark-mode .editor-toolbar button {
+    color: #ffffff;
+  }
+  
+  body.dark-mode .editor-toolbar button:hover,
+  body.dark-mode .editor-toolbar button.active {
+    background-color: #4a4a4a;
+  }
+  
+  body.dark-mode .editor-preview {
+    background-color: #2d2d2d;
+    color: #ffffff;
+  }
+  
+  body.dark-mode .CodeMirror-cursor {
+    border-left-color: #ffffff;
+  }
+  
+  body.dark-mode .CodeMirror-selected {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  body.dark-mode .CodeMirror-line::selection,
+  body.dark-mode .CodeMirror-line > span::selection,
+  body.dark-mode .CodeMirror-line > span > span::selection {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  body.dark-mode .CodeMirror-line::-moz-selection,
+  body.dark-mode .CodeMirror-line > span::-moz-selection,
+  body.dark-mode .CodeMirror-line > span > span::-moz-selection {
+    background-color: rgba(255, 255, 255, 0.1);
+  }

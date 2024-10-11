@@ -1,0 +1,21 @@
+.blog-post {
+    margin-bottom: 30px;
+}
+
+.blog-post h2 {
+    margin-bottom: 10px;
+}
+
+.blog-post .date {
+    font-style: italic;
+    color: #666;
+    margin-bottom: 10px;
+}
+
+.blog-post p {
+    margin-bottom: 15px;
+}
+
+.blog-post .btn {
+    display: inline-block;
+}

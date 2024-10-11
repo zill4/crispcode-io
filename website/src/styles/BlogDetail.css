@@ -1,0 +1,39 @@
+.blog-detail {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.blog-detail h1 {
+    margin-bottom: 10px;
+}
+
+.blog-meta {
+    font-style: italic;
+    color: #666;
+    margin-bottom: 20px;
+}
+
+.blog-meta .author {
+    margin-right: 15px;
+}
+
+.blog-content {
+    line-height: 1.6;
+    margin-bottom: 20px;
+}
+
+.blog-tags {
+    font-style: italic;
+    color: #666;
+}
+
+.loading, .error {
+    text-align: center;
+    padding: 20px;
+    font-size: 18px;
+}
+
+.error {
+    color: red;
+}

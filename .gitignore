@@ -1,2 +1,25 @@
 no_scraper.py
+.upm
+.pythonlibs
+.local
+.cache
+__pycache__
+# Node modules
+node_modules/
+
+# Builds
+frontend/build/
+
+# Firebase
+.firebase/
+.firebaserc
+
+# Environment variables
 .env
+
+# MacOS files
+.DS_Store
+
+# Logs
+logs/
+meow.json%  

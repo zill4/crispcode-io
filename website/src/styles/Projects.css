@@ -1,0 +1,63 @@
+.projects {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.project {
+    margin-bottom: 30px;
+}
+
+.project h2 {
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+.project-links {
+    margin-top: 15px;
+}
+
+.project-links a {
+    margin-right: 10px;
+}
+
+.project-media {
+    margin-top: 20px;
+}
+
+.project-media img,
+.project-media video {
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+}
+
+/* These styles should be consistent with your global styles */
+.btn {
+    display: inline-block;
+    background-color: var(--primary-color);
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    text-decoration: none;
+    transition: background-color 0.3s ease;
+}
+
+.btn:hover {
+    background-color: #2980b9;
+}
+
+.btn:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
+/* Add this to ensure dark mode compatibility */
+.section {
+    background-color: var(--section-background);
+    color: var(--section-text);
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    padding: 20px;
+}

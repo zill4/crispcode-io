@@ -1,0 +1,52 @@
+.project-detail {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.project-detail h1 {
+    margin-bottom: 20px;
+}
+
+.project-links {
+    margin-bottom: 20px;
+}
+
+.project-links .btn {
+    display: inline-block;
+    margin-right: 10px;
+    padding: 10px 15px;
+    background-color: #007bff;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+
+}
+
+.project-links .btn:hover {
+    background-color: #0056b3;
+}
+
+.project-description {
+    margin-bottom: 20px;
+}
+
+.project-media {
+    margin-bottom: 20px;
+}
+
+.project-media img,
+.project-media video {
+    max-width: 100%;
+    height: auto;
+}
+
+.project-date {
+    font-style: italic;
+    color: #666;
+}
+
+.error {
+    color: red;
+    font-weight: bold;
+}

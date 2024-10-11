@@ -1,0 +1,357 @@
+:root {
+  --bg-color: #ffffff;           /* Light background */
+  --text-color: #000000;         /* Dark text */
+  --secondary-color: #6c757d;    /* Gray for secondary text */
+  --tertiary-color: #343a40;     /* Darker color for headings and nav links */
+}
+
+body {
+  font-family: 'Arial', sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  line-height: 1.6;
+  margin: 0;
+  padding: 0;
+}
+body.dark-mode {
+  --bg-color: #121212;
+  --text-color: #ffffff;
+  --secondary-color: #a0a0a0;
+  --tertiary-color: #e0e0e0;
+}
+.theme-toggle {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.5rem;
+}
+
+/* Add these new styles for dark mode */
+body.dark-mode {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}
+
+body.dark-mode header {
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
+body.dark-mode #recent-posts,
+body.dark-mode #about,
+body.dark-mode #projects,
+body.dark-mode #links {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+body.dark-mode .blog-post {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+body.dark-mode .btn {
+  background-color: var(--accent-color);
+  color: var(--bg-color);
+}
+
+body.dark-mode .btn:hover {
+  background-color: var(--bg-color);
+  color: var(--accent-color);
+}
+
+body.dark-mode .search-form input[type='text'] {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  border-color: var(--accent-color);
+}
+
+body.dark-mode .search-form button {
+  background-color: var(--accent-color);
+  color: var(--bg-color);
+}
+
+body.dark-mode .search-form button:hover {
+  background-color: var(--bg-color);
+  color: var(--accent-color);
+}
+.container {
+  width: 80%;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+header {
+  background-color: rgba(255, 255, 255, 0.8); /* Light background with slight opacity */
+  padding: 20px 0;
+}
+
+nav ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+nav ul li {
+  display: inline;
+  margin-right: 20px;
+}
+
+nav ul li a {
+  color: var(--tertiary-color);
+  text-decoration: none;
+}
+
+h1, h2, h3 {
+  color: var(--tertiary-color);
+}
+
+a {
+  color: var(--accent-color);
+  text-decoration: none;
+}
+
+#hero {
+  text-align: center;
+  padding: 40px 0;
+}
+
+#recent-posts, #about, #projects, #links {
+  background-color: rgba(0, 0, 0, 0.05); /* Light gray background */
+  padding: 40px;
+  margin-bottom: 40px;
+  border-radius: 10px;
+}
+
+.blog-post {
+  background-color: rgba(0, 0, 0, 0.03); /* Even lighter gray */
+  padding: 20px;
+  margin-bottom: 20px;
+  border-radius: 5px;
+  transition: transform 0.3s ease;
+}
+
+.blog-post:hover {
+  transform: translateY(-5px);
+}
+
+.blog-post h3 {
+  margin-top: 0;
+}
+
+.date {
+  color: var(--secondary-color);
+  font-size: 0.9em;
+}
+
+.btn {
+  display: inline-block;
+  background-color: var(--bg-color);
+  color: var(--accent-color);
+  padding: 10px 20px;
+  border-radius: 5px;
+  margin-top: 20px;
+  transition: background-color 0.3s ease;
+  border: 1px solid var(--accent-color);
+}
+
+.btn:hover {
+  background-color: var(--accent-color);
+  color: var(--bg-color);
+}
+
+@media (max-width: 768px) {
+  .container {
+    width: 95%;
+  }
+}
+
+.admin-actions {
+  margin-top: 20px;
+}
+
+.admin-actions .btn {
+  margin-right: 10px;
+}
+
+.btn-danger {
+  background-color: #dc3545;
+  color: var(--bg-color);
+  border: 1px solid #dc3545;
+}
+
+.btn-danger:hover {
+  background-color: #c82333;
+  border-color: #c82333;
+}
+
+.pagination {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.pagination a,
+.pagination span {
+  padding: 5px 10px;
+  margin: 0 5px;
+  border: 1px solid var(--accent-color);
+  color: var(--accent-color);
+  text-decoration: none;
+  border-radius: 3px;
+}
+
+.pagination a:hover {
+  background-color: var(--accent-color);
+  color: var(--bg-color);
+}
+
+.pagination .current-page {
+  background-color: var(--accent-color);
+  color: var(--bg-color);
+}
+
+.pagination .ellipsis {
+  border: none;
+}
+
+#links ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+#links ul li {
+  margin-bottom: 10px;
+}
+
+.about-container {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  min-height: calc(100vh - 100px);
+}
+
+.about-image,
+.about-content {
+  flex: 1;
+  padding: 40px;
+}
+
+.about-image img {
+  width: 100%;
+  height: auto;
+  max-height: 400px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+.about-content {
+  background-color: rgba(0, 0, 0, 0.05); /* Light gray background */
+  border-radius: 10px;
+}
+
+@media (max-width: 768px) {
+  .about-container {
+    flex-direction: column;
+  }
+
+  .about-image,
+  .about-content {
+    width: 100%;
+  }
+}
+
+.search-form {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+.search-form input[type='text'] {
+  padding: 5px 10px;
+  border: 1px solid var(--accent-color);
+  border-radius: 5px 0 0 5px;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}
+
+.search-form button {
+  padding: 5px 10px;
+  background-color: var(--accent-color);
+  color: var(--bg-color);
+  border: 1px solid var(--accent-color);
+  border-radius: 0 5px 5px 0;
+  cursor: pointer;
+}
+
+.search-form button:hover {
+  background-color: var(--bg-color);
+  color: var(--accent-color);
+}
+
+/* Add this to your existing CSS */
+
+.create-blog-post {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.create-blog-post h1 {
+  margin-bottom: 20px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+}
+
+.form-group input[type="text"] {
+  width: 100%;
+  padding: 10px;
+  font-size: 16px;
+}
+
+.preview {
+  border: 1px solid #ccc;
+  padding: 20px;
+  min-height: 200px;
+  background-color: #f9f9f9;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.form-actions button {
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+/* Dark mode styles */
+body.dark-mode .create-blog-post {
+  color: var(--text-color);
+}
+
+body.dark-mode .form-group input[type="text"],
+body.dark-mode .preview {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  border-color: var(--accent-color);
+}
+
+body.dark-mode .form-actions button {
+  background-color: var(--accent-color);
+  color: var(--bg-color);
+  border: none;
+}
+
+body.dark-mode .form-actions button:hover {
+  background-color: var(--bg-color);
+  color: var(--accent-color);
+  border: 1px solid var(--accent-color);
+}
+
