@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Route, Routes, Link, Navigate } from 'react-router-dom';
 import Home from './pages/Home';
 import Blog from './pages/Blog';
@@ -6,17 +6,12 @@ import Projects from './pages/Projects';
 import About from './pages/About';
 import BlogDetail from './pages/BlogDetail';
 import ProjectDetail from './pages/ProjectDetail';
-import { AuthContext } from './contexts/authContext';
 import { ThemeProvider } from './contexts/themeContext';
 import ThemeToggle from './components/themeToggle';
 import './App.css';
 
 function App() {
-  const { currentUser, logout } = useContext(AuthContext);
 
-  const handleLogout = () => {
-    logout();
-  };
 
   return (
     <ThemeProvider>
@@ -78,11 +73,11 @@ function App() {
             </Routes>
           </main>
 
-          <footer className="footer">
+          {/* <footer className="footer">
             <div className="container">
               <p>&copy; 2024 crispcode.io All rights reserved.</p>
             </div>
-          </footer>
+          </footer> */}
         </div>
       </Router>
     </ThemeProvider>

@@ -50,10 +50,14 @@ function Home() {
             <section className="featured-posts section">
                 <h2>Latest Blog Posts</h2>
                 {recentPosts.map(post => (
-                    <article key={post.id} className="blog-post">
-                        <h3><Link to={`/blog/${post.id}`}>{post.title}</Link></h3>
-                        <p className="date">{new Timestamp(post.createdAt.seconds, post.createdAt.nanoseconds).toDate().toLocaleDateString()}</p>
-                    </article>
+                <article key={post.id} className="blog-post section">
+                <h2><Link to={`/blog/${post.id}`}>{post.title}</Link></h2>
+                <p>{post.content.length > 100 ? `${post.content.substring(0, 100)}...` : post.content}</p>
+                <div className="blog-date-container">
+                    <p className="date">Created:{new Timestamp(post.createdAt.seconds, post.createdAt.nanoseconds).toDate().toLocaleString()}</p>
+                     {post.updatedAt && <p className="date">Updated:{new Timestamp(post.updatedAt.seconds, post.updatedAt.nanoseconds).toDate().toLocaleString()}</p>}
+                    </div>
+                </article>
                 ))}
             </section>
 

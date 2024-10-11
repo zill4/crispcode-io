@@ -64,8 +64,11 @@ function Blog() {
             {posts.map(post => (
                 <article key={post.id} className="blog-post section">
                     <h2><Link to={`/blog/${post.id}`}>{post.title}</Link></h2>
-                    <p className="date">{new Timestamp(post.createdAt.seconds, post.createdAt.nanoseconds).toDate().toLocaleDateString()}</p>
-                    <p>{post.content.length > 200 ? `${post.content.substring(0, 200)}...` : post.content}</p>
+                    <p>{post.content.length > 100 ? `${post.content.substring(0, 100)}...` : post.content}</p>
+                    <div className="blog-date-container">
+                        <p className="date">Created:{new Timestamp(post.createdAt.seconds, post.createdAt.nanoseconds).toDate().toLocaleString()}</p>
+                         {post.updatedAt && <p className="date">Updated:{new Timestamp(post.updatedAt.seconds, post.updatedAt.nanoseconds).toDate().toLocaleString()}</p>}
+                    </div>
                 </article>
             ))}
 

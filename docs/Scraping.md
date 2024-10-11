@@ -1,6 +1,5 @@
 # WebScraping
-
-Based off usefule post by [tuna](https://x.com/tunahorse21)
+Based off useful post by [tuna](https://x.com/tunahorse21)
 
 [WebScraping in 2024: Protect Ya Neck Pt.1](https://x.com/tunahorse21/status/1844589100608668035)
 

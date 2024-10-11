@@ -88,3 +88,22 @@
 .error {
     color: #FF0000; /* Red */
 }
+
+.blog-content img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 20px auto;
+}
+
+@media (min-width: 768px) {
+    .blog-content img {
+        max-width: 80%;
+    }
+}
+
+@media (min-width: 1024px) {
+    .blog-content img {
+        max-width: 70%;
+    }
+}

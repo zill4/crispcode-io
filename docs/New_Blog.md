@@ -1,43 +1,10 @@
-import click
-import firebase_admin
-from firebase_admin import credentials, firestore
-from datetime import datetime
-import os
-import hashlib
+# I Updated my Blog!
+I should probably write a post about it.
 
-# Initialize Firebase app
-cred = credentials.Certificate("firebase-credentials.json")
-firebase_admin.initialize_app(cred)
+So basically now I have a service that uploads my markdown files to my blog via firestore. Its pretty neat and simple, and if it words correctly everything should have a createdAt and updatedAt timestamp.
 
-db = firestore.client()
-
-def get_file_hash(file_path):
-    """Calculate MD5 hash of file contents."""
-    with open(file_path, 'rb') as f:
-        return hashlib.md5(f.read()).hexdigest()
-
-def process_markdown_file(file_path):
-    """Process a single markdown file."""
-    with open(file_path, 'r') as f:
-        content = f.read()
-    
-    lines = content.split('\n')
-    title = lines[0].lstrip('#').strip()
-    content = '\n'.join(lines[1:]).strip()
-    
-    file_hash = get_file_hash(file_path)
-    
-    post = {
-        'authorId': 'MDAFRgSWFHfkyRdXL46AQPDNWAF3',
-        'authorName': 'Zill4',
-        'content': content,
-        'title': title,
-        'fileHash': file_hash,
-        'filePath': file_path
-    }
-    
-    return post
-
+__Here is the basic code for the service:__
+```
 @click.command()
 @click.option('--docs-dir', '-d', default='../../docs', help='Directory containing markdown files')
 def upload_blog_posts(docs_dir):
@@ -72,3 +39,8 @@ def upload_blog_posts(docs_dir):
 
 if __name__ == '__main__':
     upload_blog_posts()
+```
+
+In the future I'd like to maybe add a cron job for this or potentially executes a bunch of actions updating my X profile, my website, and potentially other things. I'm kind of thinking of something like George Jetson with a big button to press and call it a day...
+
+![george_and_the_button](https://blog.frankiefoto.com/wp-content/uploads/2015/08/3button.jpg)
