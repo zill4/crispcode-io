@@ -43,4 +43,4 @@ if __name__ == '__main__':
 
 In the future I'd like to maybe add a cron job for this or potentially executes a bunch of actions updating my X profile, my website, and potentially other things. I'm kind of thinking of something like George Jetson with a big button to press and call it a day...
 
-![george_and_the_button](https://blog.frankiefoto.com/wp-content/uploads/2015/08/3button.jpg)
+![george_and_the_button](https://github.com/zill4/crispcode-io/blob/main/media/jetsons.jpg?raw=true)
