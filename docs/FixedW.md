@@ -20,7 +20,7 @@ Longterm the objective is to build a reputable network of businesses that are re
 
 
 —
-Ironically we going to lean into SOCIAL - MOBILE - LOCAL
+Ironically we're going to lean into SOCIAL - MOBILE - LOCAL
 - Connect with car communities in your area to help with your build.
 - Find local businesses for repairs or mods.
 - Share the work or damage you’ve done to your car.
