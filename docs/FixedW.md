@@ -1,4 +1,6 @@
-# FixedW/ Manifesto
+# FixedW/ Car AI Diagnosis App
+
+Checkout [FixedW/ App](https://fixedwith.web.app/home)
 
 The ultimate goal is to help people __confidently__ understand what work needs to be done on their car. 
 

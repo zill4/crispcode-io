@@ -1,6 +1,10 @@
 # SWITCHTAPE
 11/03/24
 ![Switchtapelogo](https://github.com/zill4/crispcode-io/blob/main/media/switchtape-logo-black.png?raw=true)
+
+
+checkout [switchtape](switchtape.com)
+
 I’ve made a new project out of inconvenience. I love listening to music while I work and usually that entails me making big playlists for fitting my mood. For this I usually use Spotify, they have a great library of music, and it’s easy to see what my friends are listening to, and share what I’m listening to with them. 
 
 However, I just discovered how much better of a listening experience Apple Music is. All of my playlists live on Spotify though, and manually recreating them would not be an option since some of my playlists have hundreds of songs in them. I found some services online that can transfer playlists for you, but they charge you if you try to transfer more than 100 songs.
