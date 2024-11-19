@@ -1,0 +1,11 @@
+{
+    "title": "SWITCHTAPE",
+        "description": "SwitchTape is a tool that lets you convert a Spotify playlist into an Apple playlist or vice-versa. Planning on adding more platforms for conversion and additional features in the future.",
+        "imageLink": "https://github.com/zill4/crispcode-io/blob/main/media/switchtape-logo-black.png?raw=true",
+    "links": [
+      {
+        "name": "Live Demo",
+        "url": "https://switchtape.com"
+      }
+    ]
+  }
