@@ -61,3 +61,14 @@
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     padding: 20px;
 }
+
+.project-image {
+    width: 100%;
+    height: auto;
+    margin-bottom: 20px;
+}
+
+.project-links .btn {
+    margin-right: 10px;
+    margin-bottom: 10px;
+}

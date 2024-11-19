@@ -1,0 +1,17 @@
+{
+    "title": "FixedW/",
+    "description": "FixedW/ is a car diagnosis tool powered by AI. It helps you diagnose your potential issues and spec out mods you'd like to make to your car.",
+    "imageLink": "https://example.com/image.jpg",
+    "links": [
+      {
+        "name": "GitHub",
+        "url": "https://github.com/username/project"
+      },
+      {
+        "name": "Live Demo",
+        "url": "https://example.com/live"
+      }
+    ],
+    "createdAt": "Timestamp",
+    "updatedAt": "Timestamp"
+  }

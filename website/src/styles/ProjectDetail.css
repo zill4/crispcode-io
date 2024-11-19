@@ -50,3 +50,14 @@
     color: red;
     font-weight: bold;
 }
+
+.project-image {
+    width: 100%;
+    height: auto;
+    margin-bottom: 20px;
+}
+
+.project-links .btn {
+    margin-right: 10px;
+    margin-bottom: 10px;
+}

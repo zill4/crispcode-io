@@ -16,7 +16,7 @@ function ProjectDetail() {
             try {
                 const docRef = doc(db, 'projects', id);
                 const docSnap = await getDoc(docRef);
-                
+
                 if (docSnap.exists()) {
                     setProject({ id: docSnap.id, ...docSnap.data() });
                 } else {
@@ -40,28 +40,27 @@ function ProjectDetail() {
     return (
         <div className="project-detail">
             <h1>{project.title}</h1>
+            {project.imageLink && (
+                <img src={project.imageLink} alt={project.title} className="project-image" />
+            )}
             <div className="project-links">
-                <a href={project.repoLink} target="_blank" rel="noopener noreferrer" className="btn">GitHub Repository</a>
-                {project.liveLink && (
-                    <a href={project.liveLink} target="_blank" rel="noopener noreferrer" className="btn">Live Demo</a>
-                )}
+                {project.links && project.links.map((link, index) => (
+                    <a
+                        key={index}
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn"
+                    >
+                        {link.name}
+                    </a>
+                ))}
             </div>
             <div className="project-description">
                 <ReactMarkdown>{project.description}</ReactMarkdown>
             </div>
-            {project.mediaLink && (
-                <div className="project-media">
-                    {project.mediaType === 'photo' ? (
-                        <img src={project.mediaLink} alt={project.title} />
-                    ) : (
-                        <video src={project.mediaLink} controls>
-                            Your browser does not support the video tag.
-                        </video>
-                    )}
-                </div>
-            )}
             <div className="project-date">
-                Created on: {new Date(project.createdAt).toLocaleDateString()}
+                Created on: {new Date(project.createdAt.toDate()).toLocaleDateString()}
             </div>
         </div>
     );

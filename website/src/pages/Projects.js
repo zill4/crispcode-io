@@ -38,10 +38,12 @@ function Projects() {
         if (!lastVisible || !hasMore) return;
         setLoading(true);
         try {
-            const q = query(collection(db, 'projects'), 
-                            orderBy('createdAt', 'desc'), 
-                            startAfter(lastVisible), 
-                            limit(postsPerPage));
+            const q = query(
+                collection(db, 'projects'),
+                orderBy('createdAt', 'desc'),
+                startAfter(lastVisible),
+                limit(postsPerPage)
+            );
             const querySnapshot = await getDocs(q);
             const fetchedProjects = querySnapshot.docs.map(doc => ({
                 id: doc.id,
@@ -64,28 +66,27 @@ function Projects() {
                     <h2>
                         <Link to={`/project/${project.id}`}>{project.title}</Link>
                     </h2>
+                    {project.imageLink && (
+                        <img src={project.imageLink} alt={project.title} className="project-image" />
+                    )}
                     <ReactMarkdown>
                         {project.description.length > 200 
                             ? `${project.description.substring(0, 200)}...` 
                             : project.description}
                     </ReactMarkdown>
                     <div className="project-links">
-                        <a href={project.repoLink} target="_blank" rel="noopener noreferrer" className="btn">GitHub</a>
-                        {project.liveLink && (
-                            <a href={project.liveLink} target="_blank" rel="noopener noreferrer" className="btn">Live Demo</a>
-                        )}
+                        {project.links && project.links.map((link, index) => (
+                            <a
+                                key={index}
+                                href={link.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="btn"
+                            >
+                                {link.name}
+                            </a>
+                        ))}
                     </div>
-                    {project.mediaLink && (
-                        <div className="project-media">
-                            {project.mediaType === 'photo' ? (
-                                <img src={project.mediaLink} alt={project.title} />
-                            ) : (
-                                <video src={project.mediaLink} controls>
-                                    Your browser does not support the video tag.
-                                </video>
-                            )}
-                        </div>
-                    )}
                 </article>
             ))}
             {loading && <p>Loading...</p>}
