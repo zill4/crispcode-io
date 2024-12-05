@@ -5,7 +5,7 @@ function About() {
     return (
         <div className="about-container">
             <div className="about-image">
-                <img src="https://media.licdn.com/dms/image/v2/D5603AQEUpSn8cMgZ3w/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1719878221109?e=1732752000&v=beta&t=GiX7H2TgGq9XPrGk9BpMYf1ah7-1wBDmqkaldCXJwuE" alt="Profile Picture"/>
+                <img src="https://github.com/zill4/crispcode-io/blob/main/media/me.jpeg?raw=true" alt="Profile Picture"/>
             </div>
             <div className="about-content">
                 <h1>About Me</h1>
