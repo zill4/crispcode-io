@@ -52,9 +52,11 @@
 }
 
 .project-image {
+    max-width: 600px;
     width: 100%;
     height: auto;
-    margin-bottom: 20px;
+    margin: 0 auto 20px;
+    display: block;
 }
 
 .project-links .btn {
