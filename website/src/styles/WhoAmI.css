@@ -60,6 +60,11 @@
   max-width: 800px;
   margin: 0 auto;
   padding: 1rem;
+  position: relative;
+  overflow-y: auto;
+  max-height: 100vh;
+  padding-bottom: 2rem;
+  overflow-x: hidden;
 }
 
 .suggestion-buttons {
@@ -172,14 +177,15 @@
   align-items: center;
   gap: 1.5rem;
   margin-bottom: 0.5rem;
-  padding: 0.5rem;
+  padding: 2rem 0.5rem 0.5rem 0.5rem;
 }
 
 .headshot-container {
   flex-shrink: 0;
   width: 80px;
   height: 80px;
-  overflow: visible;
+  position: relative;
+  margin-top: 1rem;
 }
 
 .headshot {
@@ -190,6 +196,8 @@
   border: 2px solid #000;
   filter: brightness(1.2);
   transition: filter 0.3s ease;
+  position: relative;
+  z-index: 1;
 }
 
 .headshot:hover {
@@ -230,6 +238,11 @@
   cursor: pointer;
   text-transform: lowercase;
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 80px;
+  height: 24px;
 }
 
 .command-btn.aboutme { background: #cc3333; }
@@ -328,5 +341,141 @@
   .command-buttons {
     padding-left: 0;
     justify-content: center;
+  }
+}
+
+/* Add styles for social embeds */
+.social-icons {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.linkedin-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  fill: currentColor;
+  margin-left: 2px;
+  width: 12px;
+  height: 12px;
+}
+
+.social-embeds {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  margin-top: 1rem;
+  padding-left: calc(80px + 2rem);
+  animation: fadeIn 0.3s ease-in;
+  max-width: 504px;
+}
+
+.twitter-embed,
+.linkedin-embed {
+  width: 100%;
+  margin: 0 auto;
+  position: relative;
+  overflow: hidden;
+}
+
+.linkedin-embed {
+  height: 600px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.linkedin-embed iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  position: relative;
+  z-index: 1;
+}
+
+.twitter-embed {
+  margin-bottom: 1rem;
+}
+
+.linkedin-link {
+  display: inline-block;
+  color: #0077b5;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.linkedin-link:hover {
+  color: #004471;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .social-embeds {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  .linkedin-embed {
+    height: 500px;
+  }
+}
+
+.twitch-icon,
+.youtube-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  fill: currentColor;
+  width: 14px;
+  height: 14px;
+}
+
+.twitch-icon {
+  margin-right: 2px;
+}
+
+.youtube-icon {
+  margin: 0 2px;
+}
+
+.command-btn.streams {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 120px;
+}
+
+.streams-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  max-width: 854px;
+  width: 100%;
+  margin: 1rem auto;
+  padding: 0 1rem;
+  animation: fadeIn 0.3s ease-in;
+}
+
+.twitch-embed-container,
+.youtube-embed-container {
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+@media (max-width: 768px) {
+  .streams-container {
+    padding: 0 0.5rem;
+  }
+  
+  .twitch-embed-container iframe,
+  .youtube-embed-container iframe {
+    height: 240px;
   }
 }
