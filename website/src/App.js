@@ -1,84 +1,57 @@
 import React from 'react';
-import { BrowserRouter as Router, Route, Routes, Link, Navigate } from 'react-router-dom';
-import Home from './pages/Home';
+import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import Blog from './pages/Blog';
-import Projects from './pages/Projects';
-import About from './pages/About';
 import BlogDetail from './pages/BlogDetail';
-import ProjectDetail from './pages/ProjectDetail';
+import WhoAmI from './pages/whoami';
+import Contact from './pages/Contact';
+import Warlok from './pages/warlok';
+import Oomi from './pages/oomi';
+import Projects from './pages/Projects';
 import { ThemeProvider } from './contexts/themeContext';
-import ThemeToggle from './components/themeToggle';
+import CycleButton from './components/CycleButton';
+import Navigation from './components/Navigation';
 import './App.css';
 
+const RouteWrapper = () => {
+  const location = useLocation();
+  
+  const getNextRoute = (currentPath) => {
+    const routes = ['whoami', 'blog', 'contact', 'warlok', 'oomi', 'projects'];
+    const currentIndex = routes.indexOf(currentPath.replace('/', ''));
+    const nextIndex = (currentIndex + 1) % routes.length;
+    return routes[nextIndex];
+  };
+
+  const currentRoute = location.pathname.replace('/', '') || 'whoami';
+  const nextRoute = getNextRoute(currentRoute);
+
+  return (
+    <div className="App">
+      <header className="header">
+        <Navigation currentRoute={currentRoute} nextRoute={nextRoute} />
+      </header>
+
+      <main className="main-content">
+        <Routes>
+          <Route path="/" element={<Navigate to="/whoami" replace />} />
+          <Route path="/whoami" element={<WhoAmI />} />
+          <Route path="/blog" element={<Blog />} />
+          <Route path="/blog/:id" element={<BlogDetail />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/warlok" element={<Warlok />} />
+          <Route path="/oomi" element={<Oomi />} />
+          <Route path="/projects" element={<Projects />} />
+        </Routes>
+      </main>
+    </div>
+  );
+};
+
 function App() {
-
-
   return (
     <ThemeProvider>
       <Router>
-        <div className="App">
-          <header className="header">
-            <div className="container header-content">
-              <div className="logo">
-                <Link to="/">crispcode.io</Link>
-              </div>
-              <nav>
-                <ul>
-                  <li><Link to="/">Home</Link></li>
-                  <li><Link to="/blog">Blog</Link></li>
-                  <li><Link to="/projects">Projects</Link></li>
-                  <li><Link to="/about">About</Link></li>
-                  {/* {currentUser ? (
-                    <>
-                      <li><Link to="/admin/dashboard">Admin Dashboard</Link></li>
-                      <li><button onClick={handleLogout} className="logout-btn">Logout</button></li>
-                    </>
-                  ) : (
-                    <li><Link to="/admin/login">Admin</Link></li>
-                  )} */}
-                  <li><ThemeToggle /></li>
-                </ul>
-              </nav>
-            </div>
-          </header>
-
-          <main className="main-content">
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/blog" element={<Blog />} />
-              <Route path="/blog/:id" element={<BlogDetail />} />
-              <Route path="/projects" element={<Projects />} />
-              <Route path="/project/:id" element={<ProjectDetail />} />
-              <Route path="/about" element={<About />} />
-              {/* <Route path="/admin/login" element={<Login />} />
-              <Route
-                path="/admin/dashboard"
-                element={
-                  <PrivateRoute>
-                    <Dashboard />
-                  </PrivateRoute>
-                }
-              />
-              <Route path="/admin/create-project" element={
-                <PrivateRoute>
-                  <CreateProject />
-                </PrivateRoute>
-              } />
-              <Route path="/admin/create-blog-post" element={
-                <PrivateRoute>
-                  <CreateBlogPost />
-                </PrivateRoute>
-              } /> */}
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </main>
-
-          {/* <footer className="footer">
-            <div className="container">
-              <p>&copy; 2024 crispcode.io All rights reserved.</p>
-            </div>
-          </footer> */}
-        </div>
+        <RouteWrapper />
       </Router>
     </ThemeProvider>
   );

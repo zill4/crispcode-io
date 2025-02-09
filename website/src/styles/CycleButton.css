@@ -1,0 +1,32 @@
+.cycle-button {
+  width: 48px;
+  height: 48px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  position: relative;
+}
+
+.symbol {
+  font-family: monospace;
+  font-size: 24px;
+  color: var(--text-color);
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  transform-origin: center;
+}
+
+.cycle-button:hover .symbol {
+  transform: scale(1.1);
+}
+
+.cycle-button:active .symbol {
+  transform: scale(0.9);
+}
+
+[data-theme='dark'] .symbol {
+  color: var(--text-color);
+} 

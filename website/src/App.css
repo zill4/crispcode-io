@@ -2,24 +2,26 @@
   --primary-color: #000000;
   --secondary-color: #242424;
   --text-color: #333;
-  --background-color: #f4f4f4;
+  --background-color: #ffffff;
   --header-height: 60px;
   --section-background: #fff;
   --section-text: #333;
+  --accent-color: #2c3e50;
 }
 
 /* Dark mode variables */
 .dark-mode {
-  --primary-color: #ececec;
-  --secondary-color: #c7c7c7;
+  --primary-color: #ffffff;
+  --secondary-color: #2c3e50;
   --text-color: #f4f4f4;
   --background-color: #1a1a1a;
-  --section-background: #1a1a1a;
+  --section-background: #242424;
   --section-text: #f4f4f4;
+  --accent-color: #3498db;
 }
 
 body {
-  font-family: 'Roboto', sans-serif;
+  font-family: 'Inter', sans-serif;
   line-height: 1.6;
   color: var(--text-color);
   background-color: var(--background-color);
@@ -28,15 +30,17 @@ body {
 }
 
 .container {
-  max-width: 1000px;  /* Reduced from 1200px */
+  max-width: 800px;
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 10px;
+  position: relative;
 }
 
+/* Header styles */
 .header {
-  background-color: var(--secondary-color);
-  color: #fff;
-  padding: 10px 0;
+  background-color: var(--background-color);
+  border-bottom: 1px solid var(--secondary-color);
+  padding: 15px 0;
   position: fixed;
   width: 100%;
   top: 0;
@@ -50,103 +54,282 @@ body {
 }
 
 .logo a {
-  color: #fff;
+  color: var(--primary-color);
   text-decoration: none;
-  font-size: 1.5rem;
-  font-weight: bold;
+  font-size: 1.2rem;
+  font-weight: 600;
+  letter-spacing: -0.5px;
 }
 
 nav ul {
   display: flex;
   list-style-type: none;
-  align-items: center;  /* This will align the theme toggle with other items */
+  align-items: center;
   margin: 0;
   padding: 0;
 }
 
 nav ul li {
-  margin-left: 20px;
+  margin-left: 30px;
 }
 
 nav ul li a {
-  color: #fff;
+  color: var(--text-color);
   text-decoration: none;
-  transition: color 0.3s ease;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: color 0.2s ease;
 }
 
 nav ul li a:hover {
-  color: var(--primary-color);
+  color: var(--accent-color);
 }
 
+/* Main content styles */
 .main-content {
   margin-top: var(--header-height);
-  min-height: calc(100vh - var(--header-height) - 60px);
-  padding: 40px 0;
+  min-height: calc(100vh - var(--header-height));
+  padding: 20px 10px;  /* Added top padding for extra space */
 }
 
-.footer {
-  background-color: var(--section-background);
-  color: #fff;
-  text-align: center;
-  padding: 20px 0;
+/* Blog post card styles */
+.blog-post-wrapper {
+  position: relative;
+  margin-top: 45px;    /* Increased margin-top for all posts */
+  margin-bottom: 45px; /* Matched bottom margin for consistency */
 }
 
-.logout-btn {
-  background: none;
-  border: none;
-  color: #fff;
-  cursor: pointer;
-  font-size: 1rem;
-}
-
-.logout-btn:hover {
-  color: var(--primary-color);
-}
-
-/* Add styles for your content sections */
 .section {
-  margin-bottom: 40px;
   background-color: var(--section-background);
   color: var(--section-text);
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  padding: 20px;
+  border: 1px solid var(--secondary-color);
+  padding: 35px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  max-height: 400px;
+  overflow: hidden;
+}
+
+.section:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .section h2 {
   color: var(--primary-color);
-  border-bottom: 2px solid var(--primary-color);
-  padding-bottom: 10px;
-  margin-bottom: 20px;
+  margin-top: 0;
+  margin-bottom: 20px;  /* Added bottom margin to titles */
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+  margin-right: 0;
 }
 
-/* Style for buttons */
-.btn {
-  display: inline-block;
-  background-color: var(--primary-color);
-  color: #fff;
-  padding: 10px 20px;
-  border: none;
-  border-radius: 5px;
+.section h2 a {
+  color: var(--primary-color);
   text-decoration: none;
-  transition: background-color 0.3s ease;
 }
 
-.btn:hover {
-  background-color: #2980b9;
+.section h2 a:hover {
+  color: var(--accent-color);
+}
+
+/* Theme toggle button */
+.theme-toggle {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 8px;
+  color: var(--text-color);
+  transition: color 0.2s ease;
+}
+
+.theme-toggle:hover {
+  color: var(--accent-color);
 }
 
 /* Responsive design */
 @media (max-width: 768px) {
+  .container {
+    padding: 0 15px;
+  }
+  
   .header-content {
-    flex-direction: column;
+    flex-direction: row;
+    align-items: center;
   }
 
   nav ul {
-    margin-top: 10px;
+    margin-top: 0;
   }
 
   nav ul li {
-    margin: 0 10px;
+    margin: 0 15px;
+  }
+  
+  .section {
+    padding: 20px;
   }
 }
+
+/* Add these styles for markdown content */
+.post-content {
+  color: var(--text-color);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.post-content h1,
+.post-content h2,
+.post-content h3,
+.post-content h4,
+.post-content h5,
+.post-content h6 {
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+}
+
+.post-content p {
+  margin: 1em 0;
+}
+
+.post-content ul,
+.post-content ol {
+  margin: 1em 0;
+  padding-left: 2em;
+}
+
+.post-content li {
+  margin: 0.5em 0;
+}
+
+.post-content code {
+  background-color: var(--secondary-color);
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.9em;
+}
+
+.post-content pre {
+  background-color: var(--secondary-color);
+  padding: 1em;
+  border-radius: 5px;
+  overflow-x: auto;
+}
+
+.post-content blockquote {
+  border-left: 4px solid var(--accent-color);
+  margin: 1em 0;
+  padding-left: 1em;
+  color: var(--text-color);
+}
+
+/* Add these styles for the preview */
+.post-preview {
+  color: var(--text-color);
+  font-size: 1rem;
+  line-height: 1.6;
+  overflow: hidden;
+  margin: 20px 0;  /* Added vertical margin */
+}
+
+.post-preview img {
+  margin: 10px 0;
+}
+
+.read-more {
+  color: var(--text-color);
+  opacity: 0.7;
+  margin-top: 0.5em;
+}
+
+/* Date container and stamps */
+.date-container {
+  position: absolute;
+  top: -25px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  z-index: 1;
+}
+
+.date-stamp {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  font-size: 0.9rem;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.date-stamp.created {
+  color: #000000;
+}
+
+.date-stamp.updated {
+  color: #cc0000;
+}
+
+/* Ensure the article content is properly positioned */
+.section article {
+  position: relative;
+  z-index: 0;
+}
+
+.btn {
+  background-color: var(--section-background);
+  color: var(--section-text);
+  border: 1px solid var(--secondary-color);
+  padding: 8px 16px;
+  border-radius: 4px;  /* Reduced from default button roundness */
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  margin: 20px auto;
+  display: block;
+}
+
+.btn:hover {
+  background-color: var(--secondary-color);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+[data-theme='dark'] .btn {
+  border-color: var(--secondary-color);
+}
+
+[data-theme='dark'] .btn:hover {
+  background-color: var(--secondary-color);
+}
+
+/* First blog post specific adjustment */
+.blog-post-wrapper:first-child {
+  margin-top: 60px; /* Significantly increased to prevent cutoff */
+}
+
+/* Date stamp adjustments */
+.date-stamp {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  font-size: 0.9rem;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+/* Hide CT on mobile */
+@media (max-width: 768px) {
+  .date-stamp {
+    font-size: 0.8rem; /* Slightly smaller font on mobile */
+  }
+  
+  .date-stamp::after {
+    content: none !important; /* Remove CT suffix */
+  }
+}
+
+/* Update the date format in Blog.js to handle this */

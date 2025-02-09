@@ -1,0 +1,332 @@
+.chat-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
+.chat-message {
+  padding: 1.5rem 0;
+  line-height: 1.6;
+  border-bottom: 1px solid var(--secondary-color);
+}
+
+.chat-message:last-child {
+  border-bottom: none;
+}
+
+.chat-message.system {
+  color: var(--text-color);
+  opacity: 0.8;
+  font-size: 0.9rem;
+}
+
+.chat-message.user {
+  font-family: monospace;
+  font-size: 0.95rem;
+}
+
+.chat-message.assistant {
+  color: var(--text-color);
+}
+
+.chat-message ul {
+  margin: 1rem 0;
+  padding-left: 1.5rem;
+}
+
+.chat-message li {
+  margin: 0.5rem 0;
+}
+
+.chat-message p {
+  margin: 0.75rem 0;
+}
+
+/* Dark mode handled by existing theme variables */
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .chat-container {
+    padding: 1rem;
+  }
+  
+  .chat-message {
+    padding: 1rem 0;
+  }
+}
+
+.whoami-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.suggestion-buttons {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 2rem;
+}
+
+.suggestion-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
+}
+
+.suggestion-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+.terminal {
+  background: rgba(0, 0, 0, 0.85);
+  border-radius: 12px;
+  padding: 1.5rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #fff;
+  overflow-y: auto;
+  max-height: 60vh;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.terminal-line {
+  margin-bottom: 0.5rem;
+  white-space: pre-wrap;
+}
+
+.terminal-line.system {
+  color: #888;
+}
+
+.terminal-line.command {
+  color: #ff4444;
+}
+
+.terminal-line.response {
+  color: #fff;
+}
+
+.terminal-input-form {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.prompt {
+  color: #ff4444;
+}
+
+.terminal-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.9rem;
+  padding: 0;
+  margin: 0;
+}
+
+.terminal-input:focus {
+  outline: none;
+}
+
+/* Blinking cursor effect */
+.terminal-input::after {
+  content: '▋';
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .whoami-container {
+    padding: 0.5rem;
+  }
+  
+  .suggestion-buttons {
+    justify-content: center;
+  }
+  
+  .terminal {
+    font-size: 0.8rem;
+    padding: 1rem;
+  }
+}
+
+.intro-section {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 0.5rem;
+  padding: 0.5rem;
+}
+
+.headshot-container {
+  flex-shrink: 0;
+  width: 80px;
+  height: 80px;
+  overflow: visible;
+}
+
+.headshot {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #000;
+  filter: brightness(1.2);
+  transition: filter 0.3s ease;
+}
+
+.headshot:hover {
+  filter: brightness(1.3);
+}
+
+.speech-bubble {
+  font-size: 1.1rem;
+  color: #333;
+  line-height: 1.4;
+}
+
+.ai-highlight {
+  color: #cc3333;
+}
+
+.anything {
+  font-style: italic;
+}
+
+.anytime {
+  font-weight: bold;
+}
+
+.command-buttons {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  padding-left: calc(80px + 2rem);
+}
+
+.command-btn {
+  background: #cc3333;
+  color: white;
+  border: none;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  text-transform: lowercase;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.command-btn.aboutme { background: #cc3333; }
+.command-btn.resume { background: #cc3333; }
+.command-btn.warlok { background: #cc3333; }
+
+.command-btn:hover {
+  transform: translateY(-2px);
+}
+
+/* Animation for button disappearance */
+@keyframes zoomOut {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(0.5);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(0);
+    opacity: 0;
+  }
+}
+
+.command-btn.hiding {
+  animation: zoomOut 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.terminal {
+  background: #1a1a1a;
+  border-radius: 12px;
+  padding: 1rem;
+  margin-top: 1rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.terminal-line {
+  margin-bottom: 0.5rem;
+  font-family: monospace;
+  color: #ffffff;
+}
+
+.terminal-line.system {
+  color: #888;
+}
+
+.terminal-line.command {
+  color: #cc3333;
+}
+
+.terminal-input-line {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.prompt {
+  color: #cc3333;
+  font-family: monospace;
+}
+
+.terminal-input {
+  background: transparent;
+  border: none;
+  color: white;
+  font-family: monospace;
+  font-size: 1rem;
+  flex: 1;
+}
+
+.terminal-input:focus {
+  outline: none;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .intro-section {
+    padding: 0.5rem;
+    gap: 1rem;
+  }
+
+  .command-buttons {
+    padding-left: calc(60px + 1.5rem);
+    flex-wrap: wrap;
+  }
+
+  .command-btn {
+    font-size: 0.85rem;
+    padding: 0.35rem 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .command-buttons {
+    padding-left: 0;
+    justify-content: center;
+  }
+}
