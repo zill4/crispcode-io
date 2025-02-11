@@ -1,0 +1,11 @@
+{
+    "title": "oomi",
+        "description": "Searching for signal.",
+        "imageLink": "https://github.com/zill4/crispcode-io/blob/main/media/switchtape-logo-black.png?raw=true",
+    "links": [
+      {
+        "name": "Live Demo",
+        "url": "https://oomi.ai"
+      }
+    ]
+  }
