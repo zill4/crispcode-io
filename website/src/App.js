@@ -16,7 +16,7 @@ const RouteWrapper = () => {
   const location = useLocation();
   
   const getNextRoute = (currentPath) => {
-    const routes = ['whoami', 'blog', 'contact', 'warlok', 'oomi', 'projects'];
+    const routes = ['whoami', 'blog', 'contact', 'projects'];
     const currentIndex = routes.indexOf(currentPath.replace('/', ''));
     const nextIndex = (currentIndex + 1) % routes.length;
     return routes[nextIndex];
@@ -38,8 +38,8 @@ const RouteWrapper = () => {
           <Route path="/blog" element={<Blog />} />
           <Route path="/blog/:id" element={<BlogDetail />} />
           <Route path="/contact" element={<Contact />} />
-          <Route path="/warlok" element={<Warlok />} />
-          <Route path="/oomi" element={<Oomi />} />
+          {/* <Route path="/warlok" element={<Warlok />} />
+          <Route path="/oomi" element={<Oomi />} /> */}
           <Route path="/projects" element={<Projects />} />
         </Routes>
       </main>
