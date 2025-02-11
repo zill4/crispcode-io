@@ -1,24 +1,62 @@
-.projects {
-    max-width: 1000px;
+.projects.container {
+    padding-top: 60px;
+    max-width: 900px;
     margin: 0 auto;
-    padding: 20px;
 }
 
-.project {
-    margin-bottom: 30px;
+.project.section {
+    margin-bottom: 2rem;
+    padding: 2rem;
+    border-radius: 8px;
+    background: var(--section-background);
+    border: 1px solid var(--secondary-color);
+    color: var(--section-text);
 }
 
 .project h2 {
-    margin-top: 0;
-    margin-bottom: 10px;
+    margin: 0 0 1rem 0;
+    font-size: 1.5rem;
+}
+
+.project-image-container {
+    display: flex;
+    justify-content: center;
+    margin: 1rem 0;
+    max-height: 200px;
+    overflow: hidden;
+}
+
+.project-image {
+    max-width: 300px;
+    max-height: 200px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    cursor: pointer;
+}
+
+.project-description {
+    text-align: center;
+    margin: 1.5rem 0;
 }
 
 .project-links {
-    margin-top: 15px;
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
 }
 
-.project-links a {
-    margin-right: 10px;
+.project-links .btn {
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    background: var(--primary-color);
+    color: var(--text-on-primary);
+    text-decoration: none;
+    transition: opacity 0.2s;
+}
+
+.project-links .btn:hover {
+    opacity: 0.9;
 }
 
 .project-media {
@@ -60,14 +98,6 @@
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     padding: 20px;
-}
-
-.project-image {
-    max-width: 400px;
-    width: 100%;
-    height: auto;
-    margin: 0 auto 20px;
-    display: block;
 }
 
 .project-links .btn {

@@ -58,33 +58,45 @@ function Projects() {
         setLoading(false);
     };
 
+    const handleImageClick = (url) => {
+        if (url) {
+            window.open(url, '_blank');
+        }
+    };
+
     return (
         <div className="projects container">
-            <h1>My Projects</h1>
             {projects.map(project => (
                 <article key={project.id} className="project section">
-                    <h2>
-                        <Link to={`/project/${project.id}`}>{project.title}</Link>
-                    </h2>
+                    <h2>{project.title}</h2>
                     {project.imageLink && (
-                        <img src={project.imageLink} alt={project.title} className="project-image" />
+                        <div className="project-image-container">
+                            <img 
+                                src={project.imageLink} 
+                                alt={project.title} 
+                                className="project-image"
+                                onClick={() => handleImageClick(project.links?.[0]?.url)}
+                            />
+                        </div>
                     )}
-                    <ReactMarkdown>
-                        {project.description.length > 200 
-                            ? `${project.description.substring(0, 200)}...` 
-                            : project.description}
-                    </ReactMarkdown>
+                    <div className="project-description">
+                        <ReactMarkdown>
+                            {project.description}
+                        </ReactMarkdown>
+                    </div>
                     <div className="project-links">
                         {project.links && project.links.map((link, index) => (
-                            <a
-                                key={index}
-                                href={link.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="btn"
-                            >
-                                {link.name}
-                            </a>
+                            link.name.toLowerCase() !== 'live demo' && (
+                                <a
+                                    key={index}
+                                    href={link.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="btn"
+                                >
+                                    {link.name}
+                                </a>
+                            )
                         ))}
                     </div>
                 </article>
