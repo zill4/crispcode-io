@@ -1,26 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import '../styles/WhoAmI.css';
+import Terminal from '../components/Terminal.tsx';
 
 export default function WhoAmI() {
-  const aboutContent = `Hi, my name is Justin Crisp and I started my journey as a software engineer in 2015.
-
-I moved from Costa Mesa, CA to Cupertino, CA right after high school, enrolling in De Anza for Computer Engineering. There, I focused on computer science classes in the legendary Silicon Valley. It felt like hallowed ground, being the same school where Steve Jobs would unveil new Apple products. I excelled in computer science, joining the school's Computer Science club, The Developers Guild, and earning an A in Advanced C++. During this time, I was also interning at RingCentral, a voice-to-IP provider in Belmont, CA.
-
-At RingCentral, I served as a product analyst intern supporting the product team with competitive analysis, learning more about the SaaS business. I was invited to stay for the rest of the year, working on projects like implementing an NLP model (Word2Vec) for sentiment analysis on NPS scores of the RingCentral Glip product.
-
-Following a VP's recommendation to join the product team full-time, I decided to deepen my computer science knowledge at 42 Silicon Valley in Fremont, CA. Joining 42 required completing a one-month bootcamp with 12-hour minimum logged days working on C projects, with weekly exams testing C and Linux commands.
-
-At 42, I maintained a minimum of 120 hours weekly in the lab, working on projects like recreating the 'ls' Linux command, the 'printf' function, and building the C standard library from scratch using only Makefiles and basic functions like 'malloc' and 'free'. I was actively involved in the community: volunteering in the kitchen weekly, co-founding the video game club, and joining the ambassador's program to volunteer at tech conferences like StartupGrind and Samsung Unbox.
-
-My hackathon achievements include first place at Owl Hacks (Foothill College), third place at Samsung SXR Hackathon, and first place at the Samsung Bixby Hackathon. The Bixby victory led to a position on the Bixby Developer Relations team, where I helped launch the Bixby marketplace for Voice Apps.
-
-After Samsung, I worked on personal projects for content creators before joining Shotcall, a startup building a point-based reward program for content creator fans. There, I worked on frontend development with React, backend development with Java Spring, and DevOps using Python for Lambda functions.
-
-At Cubex, I worked as a software engineer on their frontend React app, created new endpoints in C# using .NET, and developed a microservice for discrepancy reporting. I gained valuable experience in Test Driven Development, C# design paradigms, and Azure CI/CD deployment processes.
-
-Currently, I'm focusing on learning new frontend frameworks like Astro and Deno 2.0, while creating projects using Llama large language models. My active projects include this portfolio site (React), FixedW/ (a car diagnosis app using React Native and Claude), and SwitchTape (a cross-platform music playlist converter using Astro, Preact, and Deno 2.0).
-
-My goal as an engineer is to continue learning and working on impactful projects that make people's lives easier. I aim to join a company that will challenge me to do my best work, encourages continuous learning, and fosters a supportive engineering community.`;
+  const initialHistory = [
+    { type: 'system', content: 'Welcome to the contact form. Type "help" for commands.' },
+    { type: 'prompt', content: 'contact>> ready...' }
+  ];
 
   const [inputValue, setInputValue] = useState('');
   const [visibleButtons, setVisibleButtons] = useState({
@@ -139,9 +125,6 @@ My goal as an engineer is to continue learning and working on impactful projects
       </div>
 
       <div className="command-buttons">
-        <button className="command-btn aboutme" onClick={() => handleCommand('aboutme')}>
-          aboutme
-        </button>
         <button className="command-btn streams" onClick={() => handleCommand('streams')}>
           <svg className="twitch-icon" viewBox="0 0 24 24" width="14" height="14">
             <path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z"/>
@@ -210,32 +193,16 @@ My goal as an engineer is to continue learning and working on impactful projects
         </div>
       )}
 
-      <div className="terminal" ref={terminalRef}>
-        {terminalHistory.map((entry, index) => (
-          <div key={index} className={`terminal-line ${entry.type}`}>
-            {entry.content}
-          </div>
-        ))}
-        
-        <div className="terminal-input-line">
-          <span className="prompt">whoami{'>>'}</span>
-          <input  
-            ref={inputRef}
-            type="text"
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                handleCommand(inputValue);
-              }
-            }}
-            className="terminal-input"
-            spellCheck="false"
-            autoComplete="off"
-          />
-        </div>
-      </div>
-    </div>
+<Terminal
+        initialHistory={initialHistory}
+        prompt="contact>>"
+        onCommand={handleCommand}
+        className="contact-terminal terminal-container"
+        style={{
+          marginBottom: '1rem',
+          height: '600px',
+          maxHeight: '70vh'
+        }}
+      />    </div>
   );
 }

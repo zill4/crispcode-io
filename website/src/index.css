@@ -1,8 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Add font imports at the top */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Math&family=Noto+Sans+Symbols&family=Noto+Sans+Symbols+2&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Mono&display=swap');
+
 :root {
   --bg-color: #ffffff;           /* Light background */
   --text-color: #000000;         /* Dark text */
   --secondary-color: #6c757d;    /* Gray for secondary text */
   --tertiary-color: #343a40;     /* Darker color for headings and nav links */
+  
+  /* Add font family variables */
+  --font-styled: 'Noto Sans Math', 'Noto Sans Symbols', 'Noto Sans Symbols 2', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 body {
@@ -354,4 +365,3 @@ body.dark-mode .form-actions button:hover {
   color: var(--accent-color);
   border: 1px solid var(--accent-color);
 }
-
