@@ -133,21 +133,12 @@ const AI_COMMANDS: AICommand[] = [
 // Update the callAnthropic function to use the API key from firebaseConfig
 const callAnthropic = async (prompt: string, context: string) => {
   try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const response = await fetch('https://us-central1-website-mein.cloudfunctions.net/callAnthropic', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': firebaseConfig.anthropicApiKey,
-        'anthropic-version': '2023-06-01'
       },
-      body: JSON.stringify({
-        model: 'claude-3-haiku-20240307',
-        messages: [{
-          role: 'user',
-          content: `You are the helpful AI assistant oomi on Justin Crisp's website, you're little silly and very helpful. Use this context about Justin to inform your response: ${context}\n\nUser question: ${prompt}`
-        }],
-        max_tokens: 1024
-      })
+      body: JSON.stringify({ prompt, context })
     });
 
     if (!response.ok) {
