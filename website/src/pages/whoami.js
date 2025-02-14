@@ -107,15 +107,15 @@ export default function WhoAmI() {
   return (
     <div className="whoami-container">
       <div className="intro-section">
-        <div className="headshot-container">
+        {/* <div className="headshot-container">
           <img 
             src="https://github.com/zill4/crispcode-io/blob/main/media/me.jpeg?raw=true" 
             alt="Justin Crisp"
             className="headshot"
           />
-        </div>
+        </div> */}
         <div className="speech-bubble">
-          <p>
+          <p className="">
             Welcome to crispcode.io, the nexus for all things justin crisp. Ask my{' '}
             <span className="ai-highlight">AI</span>{' '}
             <span className="anything">anything</span>,{' '}
@@ -140,6 +140,13 @@ export default function WhoAmI() {
           </svg>
         </button>
       </div>
+
+      <Terminal
+        initialHistory={initialHistory}
+        prompt="contact>>"
+        onCommand={handleCommand}
+        className="terminal-container"
+      />
 
       {showStreams && (
         <div className="streams-container">
@@ -192,17 +199,6 @@ export default function WhoAmI() {
           </div>
         </div>
       )}
-
-<Terminal
-        initialHistory={initialHistory}
-        prompt="contact>>"
-        onCommand={handleCommand}
-        className="contact-terminal terminal-container"
-        style={{
-          marginBottom: '1rem',
-          height: '600px',
-          maxHeight: '70vh'
-        }}
-      />    </div>
+    </div>
   );
 }

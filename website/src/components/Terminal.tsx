@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useCallback, useEffect, useRef, memo, useMemo } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { transform, getFonts } from 'convert-unicode-fonts'
 import { db } from '../firebase'  // Same import pattern as Contact.js
@@ -153,6 +153,147 @@ const callAnthropic = async (prompt: string, context: string) => {
   }
 };
 
+// Memoize the MessageLine component
+const MemoizedMessageLine = memo(({ line }: { line: string }) => {
+  if (!line) return null;
+  
+  const timestampMatch = line.match(/^\[(.*?)\]/);
+  if (!timestampMatch) {
+    return <div className="mb-4 font-mono">{line}</div>;
+  }
+
+  const timestamp = timestampMatch[0];
+  const content = line.slice(timestamp.length).trim();
+  
+  let markdownContent = content;
+  const markdownMatch = content.match(/<markdown>([\s\S]*)<\/markdown>/);
+  if (markdownMatch) {
+    markdownContent = markdownMatch[1];
+  }
+
+  return (
+    <div className="mb-4 font-mono">
+      <div className="text-gray-600">
+        {timestamp}
+        {content.startsWith('User:') && (
+          <span className="text-gray-800">User:</span>
+        )}
+      </div>
+      <div className="mt-2 ml-8">
+        <ReactMarkdown 
+          className="prose prose-sm prose-gray max-w-none"
+          components={{
+            // Headings
+            h1: ({children}) => <h1 className="text-2xl font-bold my-4">{children}</h1>,
+            h2: ({children}) => <h2 className="text-xl font-bold my-3">{children}</h2>,
+            h3: ({children}) => <h3 className="text-lg font-bold my-2">{children}</h3>,
+            h4: ({children}) => <h4 className="text-base font-bold my-2">{children}</h4>,
+            h5: ({children}) => <h5 className="text-sm font-bold my-1">{children}</h5>,
+            h6: ({children}) => <h6 className="text-xs font-bold my-1">{children}</h6>,
+            
+            // Text formatting
+            p: ({children}) => <div className="my-2">{children}</div>,
+            strong: ({children}) => <strong className="font-bold">{children}</strong>,
+            em: ({children}) => <em className="italic">{children}</em>,
+            del: ({children}) => <del className="line-through">{children}</del>,
+            
+            // Lists
+            ul: ({children}) => <ul className="list-disc ml-4 my-2">{children}</ul>,
+            ol: ({children}) => <ol className="list-decimal ml-4 my-2">{children}</ol>,
+            li: ({children}) => <li className="my-1">{children}</li>,
+            
+            // Code
+            //@ts-ignore
+            code: ({inline, className, children}) => {
+              const match = /language-(\w+)/.exec(className || '');
+              return !inline && match ? (
+                <pre className="bg-gray-800 text-white p-4 rounded my-4 overflow-x-auto">
+                  <code className={className}>{children}</code>
+                </pre>
+              ) : (
+                <code className="bg-gray-200 px-1 rounded font-mono text-sm">{children}</code>
+              );
+            },
+            
+            // Blockquotes
+            blockquote: ({children}) => (
+              <blockquote className="border-l-4 border-gray-300 pl-4 my-4 italic">
+                {children}
+              </blockquote>
+            ),
+            
+            // Links and Images
+            a: ({href, children}) => (
+              <a 
+                href={href} 
+                className="text-blue-600 hover:underline" 
+                target="_blank" 
+                rel="noopener noreferrer"
+              >
+                {children}
+              </a>
+            ),
+            img: ({src, alt}) => (
+              <img 
+                src={src} 
+                alt={alt} 
+                className="max-w-full rounded my-4"
+                loading="lazy"
+              />
+            ),
+            
+            // Tables
+            table: ({children}) => (
+              <div className="overflow-x-auto my-4">
+                <table className="min-w-full divide-y divide-gray-300">
+                  {children}
+                </table>
+              </div>
+            ),
+            thead: ({children}) => <thead className="bg-gray-100">{children}</thead>,
+            tbody: ({children}) => <tbody className="divide-y divide-gray-200">{children}</tbody>,
+            tr: ({children}) => <tr>{children}</tr>,
+            th: ({children}) => (
+              <th className="px-4 py-2 text-left font-bold">{children}</th>
+            ),
+            td: ({children}) => <td className="px-4 py-2">{children}</td>,
+            
+            // Horizontal Rule
+            hr: () => <hr className="my-4 border-t border-gray-300" />,
+            
+            // Task Lists
+            input: ({checked}) => (
+              <input 
+                type="checkbox" 
+                checked={checked} 
+                readOnly 
+                className="mr-2"
+              />
+            ),
+          }}
+        >
+          {markdownContent}
+        </ReactMarkdown>
+      </div>
+    </div>
+  );
+}, (prevProps, nextProps) => prevProps.line === nextProps.line);
+
+// In the main Terminal component, memoize the messages section
+const MemoizedMessages = memo(({ lines, messagesRef }: { 
+  lines: string[], 
+  messagesRef: React.RefObject<HTMLDivElement> 
+}) => (
+  <div 
+    ref={messagesRef}
+    className="flex-1 overflow-auto overscroll-contain p-2 sm:p-4 text-sm text-gray-800 font-mono bg-gray-100"
+  >
+    {lines.map((line, index) => (
+      <MemoizedMessageLine key={index} line={line} />
+    ))}
+  </div>
+));
+
 export default function Terminal() {
   const [input, setInput] = useState('')
   const [lines, setLines] = useState<string[]>([
@@ -195,6 +336,9 @@ export default function Terminal() {
 
   // Add admin state
   const [isAdmin, setIsAdmin] = useState(false);
+
+  // Add state for input focus
+  const [isInputFocused, setIsInputFocused] = useState(false);
 
   // Fetch tags on component mount
   useEffect(() => {
@@ -736,81 +880,6 @@ export default function Terminal() {
     return markdownPatterns.some(pattern => pattern.test(text))
   }
 
-  // Update MessageLine component to handle markdown rendering properly
-  const MessageLine = ({ line }: { line: string }) => {
-    if (!line) return null;
-    
-    // If this is the current dancing line, render it directly
-    if (currentAnimation.frame && line === currentAnimation.frame) {
-      return (
-        <div className="mb-4 font-mono animate-fade-in">
-          {formatMessage(line, 'oomi')}
-        </div>
-      );
-    }
-    
-    const timestampMatch = line.match(/^\[(.*?)\]/);
-    if (!timestampMatch) {
-      return <div className="mb-4 font-mono">{line}</div>;
-    }
-
-    const timestamp = timestampMatch[0];
-    const content = line.slice(timestamp.length).trim();
-    
-    // Extract the actual content to render
-    let markdownContent = content;
-    const markdownMatch = content.match(/<markdown>([\s\S]*)<\/markdown>/);
-    if (markdownMatch) {
-      markdownContent = markdownMatch[1];
-    }
-
-    return (
-      <div className="mb-4 font-mono">
-        <div className="text-gray-600">
-          {timestamp}
-          {content.startsWith('User:') && (
-            <span className="text-gray-800">
-              User:
-            </span>
-          )}
-        </div>
-        <div className="mt-2 ml-8">
-          <ReactMarkdown 
-            className="prose prose-sm prose-gray max-w-none"
-            components={{
-              p: ({children}) => <div className="my-2">{children}</div>,
-              code: ({inline, children}) => {
-                if (inline) {
-                  return <code className="bg-gray-200 px-1 rounded font-mono text-sm">{children}</code>
-                }
-                return (
-                  <pre className="bg-gray-100 p-2 rounded my-2 overflow-x-auto">
-                    <code className="font-mono text-sm">{children}</code>
-                  </pre>
-                )
-              },
-              ul: ({children}) => <ul className="list-disc ml-4 my-2">{children}</ul>,
-              ol: ({children}) => <ol className="list-decimal ml-4 my-2">{children}</ol>,
-              blockquote: ({children}) => (
-                <blockquote className="border-l-4 border-gray-300 pl-4 my-2 italic">{children}</blockquote>
-              ),
-              h1: ({children}) => <h1 className="text-xl font-bold my-3">{children}</h1>,
-              h2: ({children}) => <h2 className="text-lg font-bold my-2">{children}</h2>,
-              h3: ({children}) => <h3 className="text-base font-bold my-2">{children}</h3>,
-              a: ({href, children}) => (
-                <a href={href} className="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">
-                  {children}
-                </a>
-              ),
-            }}
-          >
-            {markdownContent}
-          </ReactMarkdown>
-        </div>
-      </div>
-    );
-  };
-
   // Focus editor when entering Vim mode
   useEffect(() => {
     if (isVimMode && editorRef.current) {
@@ -887,9 +956,7 @@ export default function Terminal() {
 
   // Update the TagMenu positioning and styling
   const TagMenu = () => (
-    <div className={`absolute left-0 right-0 bg-gray-100 max-h-[400px] flex flex-col font-mono border-t-2 border-gray-800
-      ${isVimMode ? 'top-0' : 'bottom-[64px]'}`}
-    >
+    <div className="absolute bottom-[88px] left-0 right-0 bg-gray-100 border-t-2 border-gray-800 shadow-lg z-50">
       <div className="p-4">
         <input
           ref={tagInputRef}
@@ -914,7 +981,7 @@ export default function Terminal() {
         />
       </div>
       
-      <div className="flex-1 overflow-auto p-4">
+      <div className="p-4 max-h-[300px] overflow-y-auto">
         {currentTag && (
           <button
             onClick={() => {
@@ -1065,24 +1132,49 @@ export default function Terminal() {
     </div>
   );
 
-  // Move the useEffect inside the component
+  // Add useEffect to handle viewport adjustments
   useEffect(() => {
-    const handleResize = () => {
-      // Check if the virtual keyboard is likely open
-      const isKeyboardOpen = window.visualViewport?.height < window.innerHeight;
-      if (isKeyboardOpen && inputRef.current) {
-        // Scroll the input into view when keyboard opens
-        inputRef.current.scrollIntoView({ behavior: 'smooth' });
-      }
+    // Prevent viewport adjustments when keyboard appears
+    const meta = document.createElement('meta');
+    meta.name = 'viewport';
+    meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, height=' + window.innerHeight;
+    document.head.appendChild(meta);
+
+    // Prevent scroll on body when keyboard opens
+    const handleFocus = () => {
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
     };
 
-    window.visualViewport?.addEventListener('resize', handleResize);
-    return () => window.visualViewport?.removeEventListener('resize', handleResize);
+    const handleBlur = () => {
+      document.body.style.position = '';
+      document.body.style.width = '';
+    };
+
+    if (inputRef.current) {
+      inputRef.current.addEventListener('focus', handleFocus);
+      inputRef.current.addEventListener('blur', handleBlur);
+    }
+
+    return () => {
+      document.head.removeChild(meta);
+      if (inputRef.current) {
+        inputRef.current.removeEventListener('focus', handleFocus);
+        inputRef.current.removeEventListener('blur', handleBlur);
+      }
+    };
   }, []);
 
   return (
-    <div className="flex flex-col justify-center items-center min-h-screen">
-      <div className="w-full max-w-[800px] h-[600px] overflow-hidden flex flex-col relative terminal-text">
+    <div className="flex flex-col justify-start items-center w-full">
+      <div 
+        className="w-full max-w-[800px] flex flex-col relative terminal-text"
+        style={{
+          height: window.innerWidth <= 768 ? 'calc(75vh - 200px)' : 'calc(100vh - 200px)',
+          minHeight: window.innerWidth <= 768 ? '180px' : '400px',
+          maxHeight: window.innerWidth <= 768 ? 'calc(75vh - 200px)' : 'calc(100vh - 180px)',
+        }}
+      >
         {isVimMode ? (
           <div className="flex-1 flex flex-col bg-gray-100">
             <div className="flex-1 flex">
@@ -1107,6 +1199,35 @@ export default function Terminal() {
                 {/* Show menus in editor when active */}
                 {showTags && <TagMenu />}
                 
+                {/* Style menu in editor */}
+                {showStyles && (
+                  <div className="absolute top-0 left-0 right-0 bg-gray-100 max-h-[400px] flex flex-col font-mono border-t-2 border-gray-800">
+                    <div className="p-4 overflow-y-auto flex-1">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                        {FONT_STYLES.map((style) => (
+                          <button
+                            key={style.name}
+                            onClick={() => {
+                              if (isVimMode) {
+                                handleVimStyleChange(style.name);
+                              } else {
+                                setCurrentStyle(style.name);
+                              }
+                              setShowStyles(false);
+                            }}
+                            className={`flex flex-col items-center p-4 hover:bg-gray-200 rounded-lg transition-colors ${
+                              currentStyle === style.name ? 'bg-gray-200' : ''
+                            }`}
+                          >
+                            <span className="text-lg mb-2">{style.style}</span>
+                            <span className="text-sm text-gray-600">{style.name}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Emoticon menu in editor */}
                 {showEmotes && (
                   <div className="absolute top-0 left-0 right-0 bg-gray-100 max-h-[400px] flex flex-col font-mono border-t-2 border-gray-800">
@@ -1140,34 +1261,6 @@ export default function Terminal() {
                           >
                             <span className="text-2xl mb-2">{emoticon.face}</span>
                             <span className="text-sm">{emoticon.name}</span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Style menu in editor */}
-                {showStyles && (
-                  <div className="absolute top-0 left-0 right-0 bg-gray-100 max-h-[400px] flex flex-col font-mono border-t-2 border-gray-800">
-                    <div className="p-4 overflow-y-auto">
-                      <div className="grid grid-cols-2 gap-4">
-                        {FONT_STYLES.map((style, index) => (
-                          <button
-                            key={style.name}
-                            onClick={() => {
-                              if (isVimMode) {
-                                handleVimStyleChange(style.name);
-                              } else {
-                                setCurrentStyle(style.name);
-                              }
-                              setShowStyles(false);
-                            }}
-                            className={`p-4 text-center hover:bg-gray-200 rounded-lg transition-colors
-                              ${index === selectedIndex ? 'bg-gray-200' : ''}`}
-                          >
-                            <div className="text-xl mb-2">{style.style}</div>
-                            <div className="text-sm text-gray-600">{style.name}</div>
                           </button>
                         ))}
                       </div>
@@ -1218,140 +1311,173 @@ export default function Terminal() {
                 </div>
               </div>
             </div>
+
+            {/* Menu Bar - Moved outside the flex container */}
+            <div className="bg-gray-100 px-3 sm:px-4 py-2 sm:py-3 border-t-2 border-gray-800 sticky bottom-0 z-50">
+              <div className="grid grid-cols-5 gap-2 w-full max-w-[800px] mx-auto">
+                {MENU_COMMANDS.map((button) => (
+                  <button
+                    key={button}
+                    onClick={() => {
+                      const command = `/${button.toLowerCase()}/`;
+                      handleCommand(command, true);
+                    }}
+                    className={`w-full px-2 py-1 text-gray-800 text-xs font-mono focus:outline-none 
+                             flex items-center justify-center ${
+                               (button === 'STYLE' && showStyles) ||
+                               (button === 'EMOJIS' && showEmotes) ||
+                               (button === 'TAG' && showTags)
+                                 ? 'bg-gray-200'
+                                 : ''
+                               }`}
+                  >
+                    [{getStyledMenuText(button)}]
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Vim status line */}
             <div className="bg-gray-700 text-white px-4 py-1 font-mono text-sm">
               {vimCommand || 'Press : for commands -- :w (write) :q (quit) :wq (write & quit)'}
             </div>
           </div>
         ) : (
-          <>
+          <div className="flex flex-col h-full relative">
             <div 
               ref={messagesRef}
-              className="flex-1 overflow-auto p-2 sm:p-4 text-sm text-gray-800 font-mono bg-gray-100"
+              className="flex-1 overflow-auto overscroll-contain p-4 sm:p-6 text-sm sm:text-base text-gray-800 font-mono bg-gray-100"
             >
-              {lines.map((line, index) => (
-                <MessageLine key={index} line={line} />
-              ))}
-              <CurrentAnimation />
+              <MemoizedMessages lines={lines} messagesRef={messagesRef} />
             </div>
 
-            {/* Updated input area with better mobile support */}
+            {/* Menus - Moved above the input container */}
+            {showStyles && (
+              <div className="absolute bottom-[88px] left-0 right-0 bg-gray-100 border-t-2 border-gray-800 shadow-lg z-50">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 p-4">
+                  {FONT_STYLES.map((style) => (
+                    <button
+                      key={style.name}
+                      onClick={() => {
+                        setCurrentStyle(style.name);
+                        setShowStyles(false);
+                      }}
+                      className={`px-2 py-1 text-gray-800 text-sm font-mono hover:bg-gray-200 focus:outline-none
+                                 ${currentStyle === style.name ? 'bg-gray-200' : ''}`}
+                    >
+                      {style.style}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {showEmotes && (
+              <div className="absolute bottom-[88px] left-0 right-0 bg-gray-100 border-t-2 border-gray-800 shadow-lg z-50">
+                <div className="p-4">
+                  <input
+                    ref={searchInputRef}
+                    type="text"
+                    value={searchQuery}
+                    onChange={handleSearchChange}
+                    onKeyDown={handleSearchKeyDown}
+                    placeholder="Search emoticons..."
+                    className="w-full p-2 border border-gray-300 rounded"
+                    autoFocus
+                  />
+                </div>
+                <div className="p-4 grid grid-cols-3 gap-6 max-h-[300px] overflow-y-auto">
+                  {filteredEmoticons.map((emoticon, index) => (
+                    <button
+                      key={emoticon.face}
+                      onClick={() => handleEmoticonClick(emoticon.face)}
+                      className={`flex flex-col items-center ${
+                        index === selectedIndex ? 'bg-gray-200 rounded-lg p-2' : 'p-2'
+                      }`}
+                    >
+                      <span className="text-2xl mb-2">{emoticon.face}</span>
+                      <span className="text-sm">{emoticon.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div 
-              className="border-t-2 border-gray-800 bg-gray-100 p-2 sm:p-4 font-mono sticky bottom-0"
-              onClick={() => inputRef.current?.focus()}
+              style={{ 
+                position: window.innerWidth <= 768 ? 'fixed' : 'sticky',
+                bottom: window.innerWidth <= 768 ? (isInputFocused ? '50%' : '0') : '0',
+                left: window.innerWidth <= 768 ? '0' : 'auto',
+                right: window.innerWidth <= 768 ? '0' : 'auto',
+                background: 'white',
+                zIndex: 40,
+                borderTop: '1px solid #ccc',
+                width: '100%',
+                maxWidth: '800px',
+                margin: '0 auto',
+                transition: 'bottom 0.3s ease-in-out'
+              }}
             >
-              <div className="text-gray-800 flex items-center min-h-[44px] relative">
-                <div>{getInputDisplay()}</div>
-                <input
-                  type="text"
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-text"
-                  autoComplete="off"
-                  autoCorrect="off"
-                  autoCapitalize="off"
-                  spellCheck="false"
-                  enterKeyHint="send"
-                  ref={inputRef}
-                />
-                <span className="animate-pulse ml-1">_</span>
+              <div className="border-t-2 border-gray-800 bg-gray-100 p-3 sm:p-4 font-mono">
+                <div className="text-gray-800 flex items-center min-h-[44px] relative">
+                  <div className="text-sm sm:text-base w-full">{getInputDisplay()}</div>
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    value={input}
+                    onChange={(e) => {
+                      const newValue = e.target.value;
+                      const lastChar = newValue[newValue.length - 1];
+                      const prevChar = input[input.length - 1];
+                      
+                      // Prevent duplicate characters for both mobile and desktop
+                      if (newValue === input + prevChar) {
+                        return;
+                      }
+                      
+                      setInput(newValue);
+                      setIsInputFocused(newValue.length > 0);
+                    }}
+                    onFocus={() => setIsInputFocused(true)}
+                    onBlur={() => setIsInputFocused(false)}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-text"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    spellCheck="false"
+                  />
+                  <span className="animate-pulse ml-1">_</span>
+                </div>
+              </div>
+
+              {/* Menu Bar */}
+              <div className="bg-gray-100 px-3 sm:px-4 py-2 sm:py-3 border-t-2 border-gray-800">
+                <div className="grid grid-cols-5 gap-2 w-full max-w-[800px] mx-auto">
+                  {MENU_COMMANDS.map((button) => (
+                    <button
+                      key={button}
+                      onClick={() => {
+                        const command = `/${button.toLowerCase()}/`;
+                        handleCommand(command, true);
+                      }}
+                      className={`w-full px-2 py-1 text-gray-800 text-xs font-mono focus:outline-none 
+                               flex items-center justify-center ${
+                                 (button === 'STYLE' && showStyles) ||
+                                 (button === 'EMOJIS' && showEmotes) ||
+                                 (button === 'TAG' && showTags)
+                                   ? 'bg-gray-200'
+                                   : ''
+                                 }`}
+                    >
+                      [{getStyledMenuText(button)}]
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 
             {showTags && <TagMenu />}
             {showAI && <AIMenu />}
-          </>
-        )}
-
-        {/* Menu Bar with styled button */}
-        <div className="bg-gray-100 px-2 py-2 sm:py-3 flex justify-between border-t-2 border-gray-800">
-          <MenuButtons />
-        </div>
-
-        {/* Emoticon menu - only in terminal mode */}
-        {showEmotes && !isVimMode && (
-          <div className="absolute bottom-[48px] sm:bottom-[64px] left-0 right-0 bg-gray-100 max-h-[50vh] sm:max-h-[400px] flex flex-col font-mono border-t-2 border-gray-800">
-            {/* Emoticons grid */}
-            <div className="p-2 sm:p-4 overflow-y-auto flex-1">
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-6">
-                {filteredEmoticons.length > 0 ? (
-                  filteredEmoticons.map((emoticon, index) => (
-                    <button
-                      key={emoticon.face}
-                      onClick={() => handleEmoticonClick(emoticon.face)}
-                      className={`flex flex-col items-center ${
-                        index === selectedIndex ? 'bg-gray-200 rounded-lg' : ''
-                      }`}
-                    >
-                      <span className="text-gray-800 text-2xl mb-2 font-mono">
-                        {emoticon.face}
-                      </span>
-                      <span className="text-gray-800 text-sm font-mono">
-                        {emoticon.name}
-                      </span>
-                    </button>
-                  ))
-                ) : (
-                  <div className="col-span-3 text-center text-gray-800 py-4 font-mono">
-                    No emoticons found
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Search bar */}
-            <div className="p-2">
-              <div className="flex items-center relative">
-                <span className="text-gray-800 font-mono mr-2">/emojis/</span>
-                <div className="flex-1">
-                  <input
-                    ref={inputRef}
-                    type="text"
-                    value={searchQuery}
-                    onChange={handleSearchChange}
-                    onKeyDown={handleSearchKeyDown}
-                    placeholder=""
-                    className="w-full bg-transparent text-gray-800 font-mono text-sm 
-                             focus:outline-none"
-                    style={{ caretColor: 'black' }}
-                    autoFocus
-                  />
-                  <span className="absolute text-gray-400 font-mono text-sm" 
-                        style={{ 
-                          left: `${getCaretPosition()}px`,
-                          top: 0,
-                          lineHeight: '27px'
-                        }}>
-                    {previewText && !isPreviewConfirmed ? previewText.slice(searchQuery.length) : ''}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Style menu */}
-        {showStyles && !isVimMode && (
-          <div className="absolute bottom-[48px] sm:bottom-[64px] left-0 right-0 bg-gray-100 max-h-[50vh] sm:max-h-[400px] flex flex-col font-mono border-t-2 border-gray-800">
-            <div className="p-2 sm:p-4 overflow-y-auto">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
-                {FONT_STYLES.map((style, index) => (
-                  <button
-                    key={style.name}
-                    onClick={() => {
-                      setCurrentStyle(style.name)
-                      setShowStyles(false)
-                    }}
-                    className={`p-4 text-center hover:bg-gray-200 rounded-lg transition-colors
-                              ${index === selectedIndex ? 'bg-gray-200' : ''}`}
-                  >
-                    <div className="text-xl mb-2">{style.style}</div>
-                    <div className="text-sm text-gray-600">{style.name}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
           </div>
         )}
       </div>
