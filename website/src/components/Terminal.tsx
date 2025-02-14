@@ -156,7 +156,7 @@ const callAnthropic = async (prompt: string, context: string) => {
 export default function Terminal() {
   const [input, setInput] = useState('')
   const [lines, setLines] = useState<string[]>([
-    'Welcome to the terminal. Type something...'
+    '(｡♥‿♥｡) Welcome! /ask/ me anything...'
   ])
   const [showEmotes, setShowEmotes] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -180,14 +180,6 @@ export default function Terminal() {
   const [tagSearchQuery, setTagSearchQuery] = useState('');
   const tagInputRef = useRef<HTMLInputElement>(null);
   const [currentTag, setCurrentTag] = useState<string>('');
-  const [oomiMessages, setOomiMessages] = useState<string[]>([
-    { text: '*systems booting*', frames: ['( •_•)', '(•_• )', '( •_•)'] },
-    { text: '*scanning environment*', frames: ['〈(•_• )', '〈(•_•〉)', '(•_• )〉'] },
-    { text: '*initializing personality matrix*', frames: ['( ^.^)', '(^.^ )', '(^.^*)'] },
-    { text: 'Hello! I am Oomi!', frames: ['(^-^)', '(^_^)', '(^‿^)'] },
-    { text: 'Your friendly terminal companion!', frames: ['(｀･ω･´)', '(´･ω･｀)', '(｀･ω･)'] },
-    { text: 'Type /AI/ or click AI to chat with me!', frames: ['(｡♥‿♥｡)', '(｡♥‿‿♥｡)', '(｡♥‿♥｡)'] }
-  ]);
 
   // Add state for the current animation
   const [currentAnimation, setCurrentAnimation] = useState({
@@ -288,77 +280,9 @@ export default function Terminal() {
     };
   };
 
-  // Update the useEffect for the animation
+  // Remove or simplify the animation useEffect to just set the initial message
   useEffect(() => {
-    const welcomeMessage = 'Welcome to the terminal. Type something...';
-    setLines([welcomeMessage]);
-    
-    let isAnimating = true;
-    const timers: NodeJS.Timeout[] = [];
-
-    const animate = () => {
-      if (!isAnimating) return;
-
-      setCurrentAnimation(prev => {
-        const message = oomiMessages[prev.messageIndex];
-        if (!message) return prev;
-
-        const newFrameIndex = (prev.frameIndex + 1) % message.frames.length;
-        const frame = message.frames[newFrameIndex];
-        
-        return {
-          text: message.text,
-          frame,
-          messageIndex: prev.messageIndex,
-          frameIndex: newFrameIndex
-        };
-      });
-
-      const timer = setTimeout(animate, 200);
-      timers.push(timer);
-    };
-
-    const nextMessage = () => {
-      setCurrentAnimation(prev => {
-        const nextIndex = prev.messageIndex + 1;
-        
-        // Add the previous message to the terminal history
-        setLines(lines => [...lines, 
-          formatMessage(`${prev.frame} ${prev.text}`, 'oomi')
-        ]);
-
-        if (nextIndex >= oomiMessages.length) {
-          isAnimating = false;
-          return {
-            text: '',
-            frame: '',
-            messageIndex: nextIndex,
-            frameIndex: 0
-          };
-        }
-
-        return {
-          text: oomiMessages[nextIndex].text,
-          frame: oomiMessages[nextIndex].frames[0],
-          messageIndex: nextIndex,
-          frameIndex: 0
-        };
-      });
-
-      if (isAnimating) {
-        const timer = setTimeout(nextMessage, 2000);
-        timers.push(timer);
-      }
-    };
-
-    animate();
-    const initialTimer = setTimeout(nextMessage, 2000);
-    timers.push(initialTimer);
-
-    return () => {
-      isAnimating = false;
-      timers.forEach(timer => clearTimeout(timer));
-    };
+    setLines(['(｡♥‿♥｡) Welcome! /ask/ me anything...']);
   }, []);
 
   // Simplified tag creation
@@ -1141,6 +1065,21 @@ export default function Terminal() {
     </div>
   );
 
+  // Move the useEffect inside the component
+  useEffect(() => {
+    const handleResize = () => {
+      // Check if the virtual keyboard is likely open
+      const isKeyboardOpen = window.visualViewport?.height < window.innerHeight;
+      if (isKeyboardOpen && inputRef.current) {
+        // Scroll the input into view when keyboard opens
+        inputRef.current.scrollIntoView({ behavior: 'smooth' });
+      }
+    };
+
+    window.visualViewport?.addEventListener('resize', handleResize);
+    return () => window.visualViewport?.removeEventListener('resize', handleResize);
+  }, []);
+
   return (
     <div className="flex flex-col justify-center items-center min-h-screen">
       <div className="w-full max-w-[800px] h-[600px] overflow-hidden flex flex-col relative terminal-text">
@@ -1296,10 +1235,26 @@ export default function Terminal() {
               <CurrentAnimation />
             </div>
 
-            {/* Input area with styled text */}
-            <div className="border-t-2 border-gray-800 bg-gray-100 p-2 sm:p-4 font-mono">
-              <div className="text-gray-800 flex items-center">
+            {/* Updated input area with better mobile support */}
+            <div 
+              className="border-t-2 border-gray-800 bg-gray-100 p-2 sm:p-4 font-mono sticky bottom-0"
+              onClick={() => inputRef.current?.focus()}
+            >
+              <div className="text-gray-800 flex items-center min-h-[44px] relative">
                 <div>{getInputDisplay()}</div>
+                <input
+                  type="text"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-text"
+                  autoComplete="off"
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  spellCheck="false"
+                  enterKeyHint="send"
+                  ref={inputRef}
+                />
                 <span className="animate-pulse ml-1">_</span>
               </div>
             </div>
