@@ -107,16 +107,16 @@ export default function WhoAmI() {
   return (
     <div className="whoami-container">
       <div className="intro-section">
-        {/* <div className="headshot-container">
+        <div className="headshot-container">
           <img 
             src="https://github.com/zill4/crispcode-io/blob/main/media/me.jpeg?raw=true" 
             alt="Justin Crisp"
             className="headshot"
           />
-        </div> */}
+        </div>
         <div className="speech-bubble">
           <p className="">
-            Welcome to crispcode.io, the nexus for all things justin crisp. Ask my{' '}
+            Welcome to crispcode.io, the nexus for all things Justin Crisp. Ask my{' '}
             <span className="ai-highlight">AI</span>{' '}
             <span className="anything">anything</span>,{' '}
             <span className="anytime">anytime</span>.
