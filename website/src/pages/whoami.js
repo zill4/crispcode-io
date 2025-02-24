@@ -1,33 +1,68 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import '../styles/WhoAmI.css';
 import Terminal from '../components/Terminal.tsx';
 
 export default function WhoAmI() {
-  const initialHistory = [
-    { type: 'system', content: 'Welcome to the contact form. Type "help" for commands.' },
-    { type: 'prompt', content: 'contact>> ready...' }
-  ];
-
-  const [inputValue, setInputValue] = useState('');
-  const [visibleButtons, setVisibleButtons] = useState({
-    aboutme: true,
-    streams: true,
-    socials: true
-  });
   const [showSocials, setShowSocials] = useState(false);
   const [showStreams, setShowStreams] = useState(false);
-  const [terminalHistory, setTerminalHistory] = useState([
-    { type: 'system', content: 'Type a command or click a suggestion button above.' },
-    { type: 'prompt', content: 'whoami>> ask away...' }
-  ]);
   
-  const inputRef = useRef(null);
-  const terminalRef = useRef(null);
-
   useEffect(() => {
-    inputRef.current?.focus();
-    terminalRef.current?.scrollTo(0, terminalRef.current.scrollHeight);
-  }, [terminalHistory]);
+    // Calculate header height to adjust padding
+    const header = document.querySelector('.header');
+    const headerHeight = header ? header.offsetHeight : 60;
+    
+    // Set body and html to 100% height
+    document.body.style.height = '100vh';
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.height = '100vh';
+    document.documentElement.style.overflow = 'hidden';
+    
+    // Set main content to 100% height
+    const mainContent = document.querySelector('.main-content');
+    if (mainContent) {
+      mainContent.style.height = '100vh';
+      mainContent.style.margin = '0';
+      mainContent.style.padding = '0';
+      mainContent.style.overflow = 'hidden';
+    }
+    
+    // Ensure the header is visible
+    if (header) {
+      header.style.position = 'fixed';
+      header.style.top = '0';
+      header.style.width = '100%';
+      header.style.zIndex = '1000';
+    }
+    
+    // Adjust container padding based on header height
+    const whoamiContainer = document.querySelector('.whoami-container');
+    if (whoamiContainer) {
+      whoamiContainer.style.paddingTop = `${headerHeight + 10}px`;
+    }
+    
+    return () => {
+      // Reset styles when component unmounts
+      document.body.style.height = '';
+      document.body.style.overflow = '';
+      document.documentElement.style.height = '';
+      document.documentElement.style.overflow = '';
+      if (mainContent) {
+        mainContent.style.height = '';
+        mainContent.style.margin = '';
+        mainContent.style.padding = '';
+        mainContent.style.overflow = '';
+      }
+      if (header) {
+        header.style.position = '';
+        header.style.top = '';
+        header.style.width = '';
+        header.style.zIndex = '';
+      }
+      if (whoamiContainer) {
+        whoamiContainer.style.paddingTop = '';
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (showSocials) {
@@ -37,7 +72,9 @@ export default function WhoAmI() {
       document.body.appendChild(twitterScript);
       
       return () => {
-        document.body.removeChild(twitterScript);
+        if (document.body.contains(twitterScript)) {
+          document.body.removeChild(twitterScript);
+        }
       };
     }
   }, [showSocials]);
@@ -48,17 +85,21 @@ export default function WhoAmI() {
       twitchScript.src = "https://embed.twitch.tv/embed/v1.js";
       twitchScript.async = true;
       twitchScript.onload = () => {
-        new window.Twitch.Embed("twitch-embed", {
-          width: "100%",
-          height: 480,
-          channel: "zill4",
-          parent: [window.location.hostname]
-        });
+        if (window.Twitch) {
+          new window.Twitch.Embed("twitch-embed", {
+            width: "100%",
+            height: 180,
+            channel: "zill4",
+            parent: [window.location.hostname]
+          });
+        }
       };
       document.body.appendChild(twitchScript);
       
       return () => {
-        document.body.removeChild(twitchScript);
+        if (document.body.contains(twitchScript)) {
+          document.body.removeChild(twitchScript);
+        }
       };
     }
   }, [showStreams]);
@@ -66,43 +107,25 @@ export default function WhoAmI() {
   const handleCommand = (command) => {
     if (command === 'socials') {
       setShowSocials(!showSocials);
+      setShowStreams(false);
       return;
     }
     if (command === 'streams') {
       setShowStreams(!showStreams);
+      setShowSocials(false);
       return;
     }
 
-    if (visibleButtons[command]) {
-      setVisibleButtons(prev => ({ ...prev, [command]: false }));
-    }
-
-    // Add command to terminal history
-    const newHistory = [...terminalHistory, { type: 'command', content: `whoami>> ${command}` }];
-    
-    // Add response based on command
-    let response;
     switch(command) {
-      case 'aboutme':
-        response = "Hi, my name is Justin Crisp and I started my journey as a software engineer in 2015...";
-        break;
       case 'resume':
-        response = "Opening resume in new tab...";
         window.open('/resume.pdf', '_blank');
         break;
-      case 'socials':
-        response = "Socials toggled...";
-        break;
-      case 'streams':
-        response = "Streams toggled...";
-        break;
       default:
-        response = "Command not recognized. Try 'aboutme', 'resume', 'socials', or 'streams'";
+        break;
     }
-    
-    setTerminalHistory([...newHistory, { type: 'response', content: response }]);
-    setInputValue('');
   };
+
+  const terminalWrapperClass = `terminal-wrapper ${showSocials ? 'with-socials' : ''} ${showStreams ? 'with-streams' : ''}`;
 
   return (
     <div className="whoami-container">
@@ -115,7 +138,7 @@ export default function WhoAmI() {
           />
         </div>
         <div className="speech-bubble">
-          <p className="">
+          <p>
             Welcome to crispcode.io, the nexus for all things Justin Crisp. Ask my{' '}
             <span className="ai-highlight">AI</span>{' '}
             <span className="anything">anything</span>,{' '}
@@ -141,13 +164,6 @@ export default function WhoAmI() {
         </button>
       </div>
 
-      <Terminal
-        initialHistory={initialHistory}
-        prompt="contact>>"
-        onCommand={handleCommand}
-        className="terminal-container"
-      />
-
       {showStreams && (
         <div className="streams-container">
           <div className="twitch-embed-container">
@@ -156,7 +172,7 @@ export default function WhoAmI() {
           <div className="youtube-embed-container">
             <iframe
               width="100%"
-              height="480"
+              height="180"
               src="https://www.youtube.com/embed/hymnwQSjQa8"
               title="YouTube Video"
               frameBorder="0"
@@ -190,7 +206,7 @@ export default function WhoAmI() {
           <div className="linkedin-embed">
             <iframe 
               src="https://www.linkedin.com/embed/feed/update/urn:li:share:7286071426690793472" 
-              height="600" 
+              height="250"
               width="100%" 
               frameBorder="0" 
               allowFullScreen="" 
@@ -199,6 +215,10 @@ export default function WhoAmI() {
           </div>
         </div>
       )}
+
+      <div className={terminalWrapperClass}>
+        <Terminal />
+      </div>
     </div>
   );
 }

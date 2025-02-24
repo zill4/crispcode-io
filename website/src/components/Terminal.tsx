@@ -153,7 +153,7 @@ const callAnthropic = async (prompt: string, context: string) => {
   }
 };
 
-// Memoize the MessageLine component
+// Update the MemoizedMessageLine component to properly handle markdown content
 const MemoizedMessageLine = memo(({ line }: { line: string }) => {
   if (!line) return null;
   
@@ -179,95 +179,91 @@ const MemoizedMessageLine = memo(({ line }: { line: string }) => {
           <span className="text-gray-800">User:</span>
         )}
       </div>
-      <div className="mt-2 ml-8">
+      <div className="mt-2 ml-8 overflow-x-auto">
         <ReactMarkdown 
-          className="prose prose-sm prose-gray max-w-none"
+          className="prose prose-sm prose-gray max-w-none break-words"
           components={{
             // Headings
-            h1: ({children}) => <h1 className="text-2xl font-bold my-4">{children}</h1>,
-            h2: ({children}) => <h2 className="text-xl font-bold my-3">{children}</h2>,
-            h3: ({children}) => <h3 className="text-lg font-bold my-2">{children}</h3>,
-            h4: ({children}) => <h4 className="text-base font-bold my-2">{children}</h4>,
-            h5: ({children}) => <h5 className="text-sm font-bold my-1">{children}</h5>,
-            h6: ({children}) => <h6 className="text-xs font-bold my-1">{children}</h6>,
+            h1: ({node, ...props}) => <h1 className="text-2xl font-bold my-4" {...props} />,
+            h2: ({node, ...props}) => <h2 className="text-xl font-bold my-3" {...props} />,
+            h3: ({node, ...props}) => <h3 className="text-lg font-bold my-2" {...props} />,
+            h4: ({node, ...props}) => <h4 className="text-base font-bold my-2" {...props} />,
+            h5: ({node, ...props}) => <h5 className="text-sm font-bold my-1" {...props} />,
+            h6: ({node, ...props}) => <h6 className="text-xs font-bold my-1" {...props} />,
             
             // Text formatting
-            p: ({children}) => <div className="my-2">{children}</div>,
-            strong: ({children}) => <strong className="font-bold">{children}</strong>,
-            em: ({children}) => <em className="italic">{children}</em>,
-            del: ({children}) => <del className="line-through">{children}</del>,
+            p: ({node, ...props}) => <div className="my-2" {...props} />,
+            strong: ({node, ...props}) => <strong className="font-bold" {...props} />,
+            em: ({node, ...props}) => <em className="italic" {...props} />,
+            del: ({node, ...props}) => <del className="line-through" {...props} />,
             
             // Lists
-            ul: ({children}) => <ul className="list-disc ml-4 my-2">{children}</ul>,
-            ol: ({children}) => <ol className="list-decimal ml-4 my-2">{children}</ol>,
-            li: ({children}) => <li className="my-1">{children}</li>,
+            ul: ({node, ...props}) => <ul className="list-disc ml-4 my-2" {...props} />,
+            ol: ({node, ...props}) => <ol className="list-decimal ml-4 my-2" {...props} />,
+            li: ({node, ...props}) => <li className="my-1" {...props} />,
             
-            // Code
-            //@ts-ignore
-            code: ({inline, className, children}) => {
+            // Code - using a different approach to fix TypeScript errors
+            code: ({node, inline, className, children, ...props}) => {
               const match = /language-(\w+)/.exec(className || '');
               return !inline && match ? (
-                <pre className="bg-gray-800 text-white p-4 rounded my-4 overflow-x-auto">
-                  <code className={className}>{children}</code>
+                <pre className="bg-gray-800 text-white p-4 rounded my-4 overflow-x-auto max-w-full">
+                  <code className={className} {...props}>{children}</code>
                 </pre>
               ) : (
-                <code className="bg-gray-200 px-1 rounded font-mono text-sm">{children}</code>
+                <code className="bg-gray-200 px-1 rounded font-mono text-sm" {...props}>{children}</code>
               );
             },
             
             // Blockquotes
-            blockquote: ({children}) => (
-              <blockquote className="border-l-4 border-gray-300 pl-4 my-4 italic">
-                {children}
-              </blockquote>
+            blockquote: ({node, ...props}) => (
+              <blockquote className="border-l-4 border-gray-300 pl-4 my-4 italic" {...props} />
             ),
             
             // Links and Images
-            a: ({href, children}) => (
+            a: ({node, href, ...props}) => (
               <a 
                 href={href} 
                 className="text-blue-600 hover:underline" 
                 target="_blank" 
                 rel="noopener noreferrer"
-              >
-                {children}
-              </a>
+                {...props}
+              />
             ),
-            img: ({src, alt}) => (
+            img: ({node, src, alt, ...props}) => (
               <img 
                 src={src} 
                 alt={alt} 
                 className="max-w-full rounded my-4"
                 loading="lazy"
+                {...props}
               />
             ),
             
             // Tables
-            table: ({children}) => (
+            table: ({node, ...props}) => (
               <div className="overflow-x-auto my-4">
-                <table className="min-w-full divide-y divide-gray-300">
-                  {children}
-                </table>
+                <table className="min-w-full divide-y divide-gray-300" {...props} />
               </div>
             ),
-            thead: ({children}) => <thead className="bg-gray-100">{children}</thead>,
-            tbody: ({children}) => <tbody className="divide-y divide-gray-200">{children}</tbody>,
-            tr: ({children}) => <tr>{children}</tr>,
-            th: ({children}) => (
-              <th className="px-4 py-2 text-left font-bold">{children}</th>
+            thead: ({node, ...props}) => <thead className="bg-gray-100" {...props} />,
+            tbody: ({node, ...props}) => <tbody className="divide-y divide-gray-200" {...props} />,
+            tr: ({node, ...props}) => <tr {...props} />,
+            th: ({node, ...props}) => (
+              <th className="px-4 py-2 text-left font-bold" {...props} />
             ),
-            td: ({children}) => <td className="px-4 py-2">{children}</td>,
+            td: ({node, ...props}) => <td className="px-4 py-2" {...props} />,
             
             // Horizontal Rule
             hr: () => <hr className="my-4 border-t border-gray-300" />,
             
             // Task Lists
-            input: ({checked}) => (
+            input: ({node, checked, ...props}) => (
               <input 
                 type="checkbox" 
                 checked={checked} 
                 readOnly 
                 className="mr-2"
+                {...props}
               />
             ),
           }}
@@ -279,7 +275,7 @@ const MemoizedMessageLine = memo(({ line }: { line: string }) => {
   );
 }, (prevProps, nextProps) => prevProps.line === nextProps.line);
 
-// In the main Terminal component, memoize the messages section
+// Fix the messagesRef type issue
 const MemoizedMessages = memo(({ lines, messagesRef }: { 
   lines: string[], 
   messagesRef: React.RefObject<HTMLDivElement> 
@@ -663,6 +659,11 @@ export default function Terminal() {
       // Only save to Firestore if admin
       if (isAdmin) {
         handleSavePost(command, currentTag ? [currentTag] : []);
+      } else {
+        // Add message for unauthorized users
+        setLines(prev => [...prev, 
+          formatMessage('(>A<) Please login as admin to save messages. Your message is visible but not saved.', 'oomi')
+        ]);
       }
       
       setInput('')
@@ -1166,13 +1167,13 @@ export default function Terminal() {
   }, []);
 
   return (
-    <div className="flex flex-col justify-start items-center w-full">
+    <div className="flex flex-col justify-start items-center w-full h-full">
       <div 
-        className="w-full max-w-[800px] flex flex-col relative terminal-text"
+        className="w-full max-w-[800px] flex flex-col relative terminal-container"
         style={{
-          height: window.innerWidth <= 768 ? 'calc(75vh - 200px)' : 'calc(100vh - 200px)',
-          minHeight: window.innerWidth <= 768 ? '180px' : '400px',
-          maxHeight: window.innerWidth <= 768 ? 'calc(75vh - 200px)' : 'calc(100vh - 180px)',
+          height: '100%',
+          minHeight: 0, // Critical for flexbox scrolling
+          maxHeight: '100%',
         }}
       >
         {isVimMode ? (
@@ -1278,31 +1279,29 @@ export default function Terminal() {
                 )}
                 <div className="p-4">
                   <ReactMarkdown 
-                    className="prose prose-sm max-w-none"
+                    className="prose prose-sm max-w-none break-words"
                     components={{
-                      p: ({children}) => <div className="my-2">{children}</div>,
-                      code: ({inline, children}) => {
+                      p: ({node, ...props}) => <div className="my-2" {...props} />,
+                      code: ({node, inline, className, children, ...props}) => {
                         if (inline) {
-                          return <code className="font-mono text-sm">{children}</code>
+                          return <code className="font-mono text-sm" {...props}>{children}</code>
                         }
                         return (
-                          <pre className="bg-gray-100 p-2 rounded my-2 overflow-x-auto">
-                            <code className="font-mono text-sm">{children}</code>
+                          <pre className="bg-gray-100 p-2 rounded my-2 overflow-x-auto max-w-full">
+                            <code className="font-mono text-sm" {...props}>{children}</code>
                           </pre>
                         )
                       },
-                      ul: ({children}) => <ul className="list-disc ml-4 my-2">{children}</ul>,
-                      ol: ({children}) => <ol className="list-decimal ml-4 my-2">{children}</ol>,
-                      blockquote: ({children}) => (
-                        <blockquote className="border-l-4 border-gray-300 pl-4 my-2 italic">{children}</blockquote>
+                      ul: ({node, ...props}) => <ul className="list-disc ml-4 my-2" {...props} />,
+                      ol: ({node, ...props}) => <ol className="list-decimal ml-4 my-2" {...props} />,
+                      blockquote: ({node, ...props}) => (
+                        <blockquote className="border-l-4 border-gray-300 pl-4 my-2 italic" {...props} />
                       ),
-                      h1: ({children}) => <h1 className="text-xl font-bold my-3">{children}</h1>,
-                      h2: ({children}) => <h2 className="text-lg font-bold my-2">{children}</h2>,
-                      h3: ({children}) => <h3 className="text-base font-bold my-2">{children}</h3>,
-                      a: ({href, children}) => (
-                        <a href={href} className="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">
-                          {children}
-                        </a>
+                      h1: ({node, ...props}) => <h1 className="text-xl font-bold my-3" {...props} />,
+                      h2: ({node, ...props}) => <h2 className="text-lg font-bold my-2" {...props} />,
+                      h3: ({node, ...props}) => <h3 className="text-base font-bold my-2" {...props} />,
+                      a: ({node, href, ...props}) => (
+                        <a href={href} className="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer" {...props} />
                       ),
                     }}
                   >
@@ -1346,9 +1345,11 @@ export default function Terminal() {
           <div className="flex flex-col h-full relative">
             <div 
               ref={messagesRef}
-              className="flex-1 overflow-auto overscroll-contain p-4 sm:p-6 text-sm sm:text-base text-gray-800 font-mono bg-gray-100"
+              className="flex-1 overflow-auto overscroll-contain p-2 sm:p-4 text-sm sm:text-base text-gray-800 font-mono bg-gray-100"
+              style={{ minHeight: 0 }} // Critical for flexbox scrolling
             >
               <MemoizedMessages lines={lines} messagesRef={messagesRef} />
+              <CurrentAnimation />
             </div>
 
             {/* Menus - Moved above the input container */}
@@ -1405,17 +1406,15 @@ export default function Terminal() {
 
             <div 
               style={{ 
-                position: window.innerWidth <= 768 ? 'fixed' : 'sticky',
-                bottom: window.innerWidth <= 768 ? (isInputFocused ? '50%' : '0') : '0',
-                left: window.innerWidth <= 768 ? '0' : 'auto',
-                right: window.innerWidth <= 768 ? '0' : 'auto',
+                position: 'relative',
+                bottom: 'auto',
+                left: 'auto',
+                right: 'auto',
                 background: 'white',
                 zIndex: 40,
                 borderTop: '1px solid #ccc',
                 width: '100%',
-                maxWidth: '800px',
-                margin: '0 auto',
-                transition: 'bottom 0.3s ease-in-out'
+                flexShrink: 0, // Prevent shrinking
               }}
             >
               <div className="border-t-2 border-gray-800 bg-gray-100 p-3 sm:p-4 font-mono">
