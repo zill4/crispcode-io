@@ -1,10 +1,5 @@
-import React, { useState, useEffect, useRef, useReducer } from "react";
-import {
-  TerminalState,
-  TerminalAction,
-  initialState,
-  terminalReducer,
-} from "./terminalReducer";
+import React, { useEffect, useRef, useReducer } from "react";
+import { initialState, terminalReducer } from "./terminalReducer";
 import { VimEditor } from "./VimEditor";
 import { MessageDisplay } from "./MessageDisplay";
 import { InputSection } from "./InputSection";

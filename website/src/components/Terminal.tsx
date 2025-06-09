@@ -6,12 +6,9 @@ import {
   collection,
   addDoc,
   getDocs,
-  query,
-  where,
   serverTimestamp,
 } from "firebase/firestore";
 import React from "react";
-import { firebaseConfig } from "../firebase";
 
 interface Emoticon {
   face: string;
@@ -80,7 +77,7 @@ My goal as an engineer is to continue learning and working on impactful projects
 const MENU_COMMANDS = ["EDITOR", "EMOJIS", "STYLE", "AI", "TAG"];
 
 // Fix environment variable access for React
-const adminPass = "default-admin-pass"; // Replace with proper env var handling
+const adminPass = process.env.REACT_APP_ADMIN_PASS || "default-admin-pass";
 
 // Get available fonts once
 const unicodeFonts = getFonts();
@@ -747,6 +744,19 @@ export default function Terminal() {
 
       // Only save to Firestore if admin is authenticated
       if (!isMenuCommand) {
+        // Check if user is admin before allowing any content posting
+        if (!isAdmin) {
+          setLines((prev) => [
+            ...prev,
+            formatMessage(
+              "(>A<) Please login first to post content. Type the admin password to authenticate.",
+              "oomi"
+            ),
+          ]);
+          setInput("");
+          return;
+        }
+
         const response = processCommand(command);
         setLines((prev) => [
           ...prev,
@@ -754,19 +764,8 @@ export default function Terminal() {
           response,
         ]);
 
-        // Only save to Firestore if admin
-        if (isAdmin) {
-          handleSavePost(command, currentTag ? [currentTag] : []);
-        } else {
-          // Add message for unauthorized users
-          setLines((prev) => [
-            ...prev,
-            formatMessage(
-              "(>A<) Please login as admin to save messages. Your message is visible but not saved.",
-              "oomi"
-            ),
-          ]);
-        }
+        // Save to Firestore since user is authenticated admin
+        handleSavePost(command, currentTag ? [currentTag] : []);
 
         setInput("");
         setCurrentTag("");
@@ -792,6 +791,18 @@ export default function Terminal() {
           if (event.key === "Enter") {
             const cmd = vimCommand.toLowerCase();
             if (cmd === ":w" || cmd === ":write") {
+              // Check if user is admin before allowing save
+              if (!isAdmin) {
+                setLines((prev) => [
+                  ...prev,
+                  formatMessage(
+                    "(>A<) Please login first to save content. Type the admin password in terminal to authenticate.",
+                    "oomi"
+                  ),
+                ]);
+                setVimCommand("");
+                return;
+              }
               // Add to terminal lines first
               setLines((prev) => [
                 ...prev,
@@ -809,6 +820,18 @@ export default function Terminal() {
               setVimCommand("");
               setEditorContent("");
             } else if (cmd === ":wq") {
+              // Check if user is admin before allowing save and quit
+              if (!isAdmin) {
+                setLines((prev) => [
+                  ...prev,
+                  formatMessage(
+                    "(>A<) Please login first to save content. Type the admin password in terminal to authenticate.",
+                    "oomi"
+                  ),
+                ]);
+                setVimCommand("");
+                return;
+              }
               // Add to terminal lines first, then update state
               const formattedMessage = formatMessage(
                 editorContent,
