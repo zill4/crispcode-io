@@ -1,14 +1,21 @@
-import { useState, useCallback, useEffect, useRef, memo, useMemo } from 'react'
-import ReactMarkdown from 'react-markdown'
-import { transform, getFonts } from 'convert-unicode-fonts'
-import { db } from '../firebase'  // Same import pattern as Contact.js
-import { collection, addDoc, getDocs, query, where, serverTimestamp } from 'firebase/firestore';
-import React from 'react';
-import { firebaseConfig } from '../firebase';
+import { useState, useCallback, useEffect, useRef, memo, useMemo } from "react";
+import ReactMarkdown from "react-markdown";
+import { transform, getFonts } from "convert-unicode-fonts";
+import { db } from "../firebase"; // Same import pattern as Contact.js
+import {
+  collection,
+  addDoc,
+  getDocs,
+  query,
+  where,
+  serverTimestamp,
+} from "firebase/firestore";
+import React from "react";
+import { firebaseConfig } from "../firebase";
 
 interface Emoticon {
-  face: string
-  name: string
+  face: string;
+  name: string;
 }
 
 interface Tag {
@@ -34,22 +41,22 @@ interface AICommand {
 }
 
 const EMOTICONS: Emoticon[] = [
-  { face: '( •_•)', name: 'serious' },
-  { face: '┌( ಠ‿ಠ)┘', name: 'dancing' },
-  { face: '~(˘▾˘~)', name: 'wave' },
-  { face: ' ', name: 'monkey' },
-  { face: '(>ω<)', name: 'happy' },
-  { face: '(^_^)/', name: 'hi' },
-  { face: '(>A<)', name: 'frustrated' },
-  { face: '(@_@)', name: 'dizzy' },
-  { face: 'ε(･_･)з', name: 'cute' },
-  { face: '(╯°□°）╯︵ ┻━┻', name: 'flip' },
-  { face: '(´･_･`)', name: 'worried' },
-  { face: '(◕‿◕)', name: 'adorable' },
-  { face: '¯\\_(ツ)_/¯', name: 'shrug' },
-  { face: '(｡♥‿♥｡)', name: 'love' },
-  { face: '(╯︵╰,)', name: 'sad' }
-]
+  { face: "( •_•)", name: "serious" },
+  { face: "┌( ಠ‿ಠ)┘", name: "dancing" },
+  { face: "~(˘▾˘~)", name: "wave" },
+  { face: " ", name: "monkey" },
+  { face: "(>ω<)", name: "happy" },
+  { face: "(^_^)/", name: "hi" },
+  { face: "(>A<)", name: "frustrated" },
+  { face: "(@_@)", name: "dizzy" },
+  { face: "ε(･_･)з", name: "cute" },
+  { face: "(╯°□°）╯︵ ┻━┻", name: "flip" },
+  { face: "(´･_･`)", name: "worried" },
+  { face: "(◕‿◕)", name: "adorable" },
+  { face: "¯\\_(ツ)_/¯", name: "shrug" },
+  { face: "(｡♥‿♥｡)", name: "love" },
+  { face: "(╯︵╰,)", name: "sad" },
+];
 const contextLocal = `Hi, my name is Justin Crisp and I started my journey as a software engineer in 2015.
 
 I moved from Costa Mesa, CA to Cupertino, CA right after high school, enrolling in De Anza for Computer Engineering. There, I focused on computer science classes in the legendary Silicon Valley. It felt like hallowed ground, being the same school where Steve Jobs would unveil new Apple products. I excelled in computer science, joining the school's Computer Science club, The Developers Guild, and earning an A in Advanced C++. During this time, I was also interning at RingCentral, a voice-to-IP provider in Belmont, CA.
@@ -70,76 +77,75 @@ Currently, I'm focusing on learning new frontend frameworks like Astro and Deno 
 
 My goal as an engineer is to continue learning and working on impactful projects that make people's lives easier. I aim to join a company that will challenge me to do my best work, encourages continuous learning, and fosters a supportive engineering community.`;
 
+const MENU_COMMANDS = ["EDITOR", "EMOJIS", "STYLE", "AI", "TAG"];
 
-const MENU_COMMANDS = ['EDITOR','EMOJIS', 'STYLE', 'AI', 'TAG']
+// Fix environment variable access for React
+const adminPass = "default-admin-pass"; // Replace with proper env var handling
 
 // Get available fonts once
-const unicodeFonts = getFonts()
+const unicodeFonts = getFonts();
 
 // Update FONT_STYLES to include all available fonts
 const FONT_STYLES = [
-  { name: 'normal', style: 'normal text' },
-  { name: 'bold', style: '𝐛𝐨𝐥𝐝' },
-  { name: 'italic', style: '𝑖𝑡𝑎𝑙𝑖𝑐' },
-  { name: 'boldItalic', style: '𝒃𝒐𝒍𝒅 𝒊𝒕𝒂𝒍𝒊𝒄' },
-  { name: 'scriptItalic', style: '𝒔𝒄𝒓𝒊𝒑𝒕' },
-  { name: 'scriptBold', style: '𝓼𝓬𝓻𝓲𝓹𝓽' },
-  { name: 'fraktur', style: '𝔣𝔯𝔞𝔠𝔱𝔲𝔯' },
-  { name: 'boldFraktur', style: '𝖋𝖗𝖆𝖐𝖙𝖚𝖗' },
-  { name: 'doubleStruck', style: '𝕕𝕠𝕦𝕓𝕝𝕖' },
-  { name: 'sansSerif', style: '𝖲𝖺𝗇𝗌' },
-  { name: 'sansSerifBold', style: '𝗦𝗮𝗻𝘀 𝗕𝗼𝗹𝗱' },
-  { name: 'sansSerifItalic', style: '𝘚𝘢𝘯𝘴 𝘐𝘵𝘢𝘭𝘪𝘤' },
-  { name: 'sansSerifBoldItalic', style: '𝙎𝙖𝙣𝙨 𝘽𝙤𝙡𝙙 𝙄𝙩𝙖𝙡𝙞𝙘' },
-  { name: 'monospace', style: '𝚖𝚘𝚗𝚘' },
-  { name: 'super', style: 'ˢᵘᵖᵉʳ' },
-  { name: 'parenthesized', style: '⒫⒜⒭⒠⒩' },
-  { name: 'circled', style: 'Ⓒⓘⓡⓒⓛⓔⓓ' },
-  { name: 'squaredCapital', style: '🄲🄰🄿🄸🅃🄰🄻' },
-  { name: 'negativeCircledCapital', style: '🅝🅔🅖 🅒🅘🅡🅒🅛🅔' },
-  { name: 'negativeSquaredCapital', style: '🅽🅴🅶 🆂🆀🆄🅰🆁🅴' },
-  { name: 'regionalIndicatorSymbol', style: '🇷 🇪 🇬 🇮 🇴 🇳' },
-  { name: 'fullWidth', style: 'ｆｕｌｌ' },
-  { name: 'myanmar', style: 'ꓟꓬꓰꓙꓣꓚꓰꓡ' },
-  { name: 'cherokee', style: 'ᏟᎻᎬᎡᎤᎧᎬᎬ' },
-  { name: 'romanNumerals', style: 'ⅠⅡⅢⅣⅤ' },
-  { name: 'romanNumeralsSmall', style: 'ⅰⅱⅲⅳⅴ' }
-]
+  { name: "normal", style: "normal text" },
+  { name: "bold", style: "𝐛𝐨𝐥𝐝" },
+  { name: "italic", style: "𝑖𝑡𝑎𝑙𝑖𝑐" },
+  { name: "boldItalic", style: "𝒃𝒐𝒍𝒅 𝒊𝒕𝒂𝒍𝒊𝒄" },
+  { name: "scriptItalic", style: "𝒔𝒄𝒓𝒊𝒑𝒕" },
+  { name: "scriptBold", style: "𝓼𝓬𝓻𝓲𝓹𝓽" },
+  { name: "fraktur", style: "𝔣𝔯𝔞𝔠𝔱𝔲𝔯" },
+  { name: "boldFraktur", style: "𝖋𝖗𝖆𝖐𝖙𝖚𝖗" },
+  { name: "doubleStruck", style: "𝕕𝕠𝕦𝕓𝕝𝕖" },
+  { name: "sansSerif", style: "𝖲𝖺𝗇𝗌" },
+  { name: "sansSerifBold", style: "𝗦𝗮𝗻𝘀 𝗕𝗼𝗹𝗱" },
+  { name: "sansSerifItalic", style: "𝘚𝘢𝘯𝘴 𝘐𝘵𝘢𝘭𝘪𝘤" },
+  { name: "sansSerifBoldItalic", style: "𝙎𝙖𝙣𝙨 𝘽𝙤𝙡𝙙 𝙄𝙩𝙖𝙡𝙞𝙘" },
+  { name: "monospace", style: "𝚖𝚘𝚗𝚘" },
+  { name: "super", style: "ˢᵘᵖᵉʳ" },
+  { name: "parenthesized", style: "⒫⒜⒭⒠⒩" },
+  { name: "circled", style: "Ⓒⓘⓡⓒⓛⓔⓓ" },
+  { name: "squaredCapital", style: "🄲🄰🄿🄸🅃🄰🄻" },
+  { name: "negativeCircledCapital", style: "🅝🅔🅖 🅒🅘🅡🅒🅛🅔" },
+  { name: "negativeSquaredCapital", style: "🅽🅴🅶 🆂🆀🆄🅰🆁🅴" },
+  { name: "regionalIndicatorSymbol", style: "🇷 🇪 🇬 🇮 🇴 🇳" },
+  { name: "fullWidth", style: "ｆｕｌｌ" },
+  { name: "myanmar", style: "ꓟꓬꓰꓙꓣꓚꓰꓡ" },
+  { name: "cherokee", style: "ᏟᎻᎬᎡᎤᎧᎬᎬ" },
+  { name: "romanNumerals", style: "ⅠⅡⅢⅣⅤ" },
+  { name: "romanNumeralsSmall", style: "ⅰⅱⅲⅳⅴ" },
+];
 
 // Replace the transformText function with the package's transform function
 const transformText = (text: string, style: string): string => {
-  if (style === 'normal' || !unicodeFonts[style]) {
+  if (style === "normal" || !unicodeFonts[style]) {
     return text;
   }
-  
-  return transform(text, unicodeFonts[style]);
-}
 
-// Create an array of dance move frames
-const DANCE_FRAMES = [
-  '┌( ಠ‿ಠ)┘ ',
-  '└( ಠ‿ಠ)┐ ',
-  '┌( ಠ‿ಠ)┐ ',
-  '└( ಠ‿ಠ)┘ ',
-];
+  return transform(text, unicodeFonts[style]);
+};
+
+// Removed unused DANCE_FRAMES constant
 
 // Add AI commands interface and array
 const AI_COMMANDS: AICommand[] = [
-  { name: 'Help', description: 'Shows list of commands', command: 'help' },
-  { name: 'Joke', description: 'Tells a joke', command: 'joke' },
-  { name: 'Ask', description: 'Any question answered', command: 'ask' }
+  { name: "Help", description: "Shows list of commands", command: "help" },
+  { name: "Joke", description: "Tells a joke", command: "joke" },
+  { name: "Ask", description: "Any question answered", command: "ask" },
 ];
 
 // Update the callAnthropic function to use the API key from firebaseConfig
 const callAnthropic = async (prompt: string, context: string) => {
   try {
-    const response = await fetch('https://us-central1-website-mein.cloudfunctions.net/callAnthropic', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ prompt, context })
-    });
+    const response = await fetch(
+      "https://us-central1-website-mein.cloudfunctions.net/callAnthropic",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ prompt, context }),
+      }
+    );
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -148,202 +154,252 @@ const callAnthropic = async (prompt: string, context: string) => {
     const data = await response.json();
     return data.content[0].text;
   } catch (error) {
-    console.error('Error calling Anthropic:', error);
+    console.error("Error calling Anthropic:", error);
     return "Oops! I had a little hiccup. Could you try asking me that again?";
   }
 };
 
 // Update the MemoizedMessageLine component to properly handle markdown content
-const MemoizedMessageLine = memo(({ line }: { line: string }) => {
-  if (!line) return null;
-  
-  const timestampMatch = line.match(/^\[(.*?)\]/);
-  if (!timestampMatch) {
-    return <div className="mb-4 font-mono">{line}</div>;
-  }
+const MemoizedMessageLine = memo(
+  ({ line }: { line: string }) => {
+    if (!line) return null;
 
-  const timestamp = timestampMatch[0];
-  const content = line.slice(timestamp.length).trim();
-  
-  let markdownContent = content;
-  const markdownMatch = content.match(/<markdown>([\s\S]*)<\/markdown>/);
-  if (markdownMatch) {
-    markdownContent = markdownMatch[1];
-  }
+    const timestampMatch = line.match(/^\[(.*?)\]/);
+    if (!timestampMatch) {
+      return <div className="mb-4 font-mono">{line}</div>;
+    }
 
-  return (
-    <div className="mb-4 font-mono">
-      <div className="text-gray-600">
-        {timestamp}
-        {content.startsWith('User:') && (
-          <span className="text-gray-800">User:</span>
-        )}
+    const timestamp = timestampMatch[0];
+    const content = line.slice(timestamp.length).trim();
+
+    let markdownContent = content;
+    const markdownMatch = content.match(/<markdown>([\s\S]*)<\/markdown>/);
+    if (markdownMatch) {
+      markdownContent = markdownMatch[1];
+    }
+
+    return (
+      <div className="mb-4 font-mono">
+        <div className="text-gray-600">
+          {timestamp}
+          {content.startsWith("User:") && (
+            <span className="text-gray-800">User:</span>
+          )}
+        </div>
+        <div className="mt-2 ml-8 overflow-x-auto">
+          <ReactMarkdown
+            className="prose prose-sm prose-gray max-w-none break-words"
+            components={{
+              // Headings
+              h1: ({ node, ...props }) => (
+                <h1 className="text-2xl font-bold my-4" {...props} />
+              ),
+              h2: ({ node, ...props }) => (
+                <h2 className="text-xl font-bold my-3" {...props} />
+              ),
+              h3: ({ node, ...props }) => (
+                <h3 className="text-lg font-bold my-2" {...props} />
+              ),
+              h4: ({ node, ...props }) => (
+                <h4 className="text-base font-bold my-2" {...props} />
+              ),
+              h5: ({ node, ...props }) => (
+                <h5 className="text-sm font-bold my-1" {...props} />
+              ),
+              h6: ({ node, ...props }) => (
+                <h6 className="text-xs font-bold my-1" {...props} />
+              ),
+
+              // Text formatting
+              p: ({ node, ...props }) => <div className="my-2" {...props} />,
+              strong: ({ node, ...props }) => (
+                <strong className="font-bold" {...props} />
+              ),
+              em: ({ node, ...props }) => <em className="italic" {...props} />,
+              del: ({ node, ...props }) => (
+                <del className="line-through" {...props} />
+              ),
+
+              // Lists
+              ul: ({ node, ...props }) => (
+                <ul className="list-disc ml-4 my-2" {...props} />
+              ),
+              ol: ({ node, ...props }) => (
+                <ol className="list-decimal ml-4 my-2" {...props} />
+              ),
+              li: ({ node, ...props }) => <li className="my-1" {...props} />,
+
+              // Code - fixed TypeScript inline property issue
+              code: ({ node, className, children, ...props }: any) => {
+                // Check if it's a code block (has language class) vs inline code
+                const isCodeBlock =
+                  className && className.includes("language-");
+                const match = /language-(\w+)/.exec(className || "");
+
+                return isCodeBlock && match ? (
+                  <pre className="bg-gray-800 text-white p-4 rounded my-4 overflow-x-auto max-w-full">
+                    <code className={className} {...props}>
+                      {children}
+                    </code>
+                  </pre>
+                ) : (
+                  <code
+                    className="bg-gray-200 px-1 rounded font-mono text-sm"
+                    {...props}
+                  >
+                    {children}
+                  </code>
+                );
+              },
+
+              // Blockquotes
+              blockquote: ({ node, ...props }) => (
+                <blockquote
+                  className="border-l-4 border-gray-300 pl-4 my-4 italic"
+                  {...props}
+                />
+              ),
+
+              // Links and Images
+              a: ({ node, href, ...props }) => (
+                <a
+                  href={href}
+                  className="text-blue-600 hover:underline"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  {...props}
+                />
+              ),
+              img: ({ node, src, alt, ...props }) => (
+                <img
+                  src={src}
+                  alt={alt}
+                  className="max-w-full rounded my-4"
+                  loading="lazy"
+                  {...props}
+                />
+              ),
+
+              // Tables
+              table: ({ node, ...props }) => (
+                <div className="overflow-x-auto my-4">
+                  <table
+                    className="min-w-full divide-y divide-gray-300"
+                    {...props}
+                  />
+                </div>
+              ),
+              thead: ({ node, ...props }) => (
+                <thead className="bg-gray-100" {...props} />
+              ),
+              tbody: ({ node, ...props }) => (
+                <tbody className="divide-y divide-gray-200" {...props} />
+              ),
+              tr: ({ node, ...props }) => <tr {...props} />,
+              th: ({ node, ...props }) => (
+                <th className="px-4 py-2 text-left font-bold" {...props} />
+              ),
+              td: ({ node, ...props }) => (
+                <td className="px-4 py-2" {...props} />
+              ),
+
+              // Horizontal Rule
+              hr: () => <hr className="my-4 border-t border-gray-300" />,
+
+              // Task Lists
+              input: ({ node, checked, ...props }) => (
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  readOnly
+                  className="mr-2"
+                  {...props}
+                />
+              ),
+            }}
+          >
+            {markdownContent}
+          </ReactMarkdown>
+        </div>
       </div>
-      <div className="mt-2 ml-8 overflow-x-auto">
-        <ReactMarkdown 
-          className="prose prose-sm prose-gray max-w-none break-words"
-          components={{
-            // Headings
-            h1: ({node, ...props}) => <h1 className="text-2xl font-bold my-4" {...props} />,
-            h2: ({node, ...props}) => <h2 className="text-xl font-bold my-3" {...props} />,
-            h3: ({node, ...props}) => <h3 className="text-lg font-bold my-2" {...props} />,
-            h4: ({node, ...props}) => <h4 className="text-base font-bold my-2" {...props} />,
-            h5: ({node, ...props}) => <h5 className="text-sm font-bold my-1" {...props} />,
-            h6: ({node, ...props}) => <h6 className="text-xs font-bold my-1" {...props} />,
-            
-            // Text formatting
-            p: ({node, ...props}) => <div className="my-2" {...props} />,
-            strong: ({node, ...props}) => <strong className="font-bold" {...props} />,
-            em: ({node, ...props}) => <em className="italic" {...props} />,
-            del: ({node, ...props}) => <del className="line-through" {...props} />,
-            
-            // Lists
-            ul: ({node, ...props}) => <ul className="list-disc ml-4 my-2" {...props} />,
-            ol: ({node, ...props}) => <ol className="list-decimal ml-4 my-2" {...props} />,
-            li: ({node, ...props}) => <li className="my-1" {...props} />,
-            
-            // Code - using a different approach to fix TypeScript errors
-            code: ({node, inline, className, children, ...props}) => {
-              const match = /language-(\w+)/.exec(className || '');
-              return !inline && match ? (
-                <pre className="bg-gray-800 text-white p-4 rounded my-4 overflow-x-auto max-w-full">
-                  <code className={className} {...props}>{children}</code>
-                </pre>
-              ) : (
-                <code className="bg-gray-200 px-1 rounded font-mono text-sm" {...props}>{children}</code>
-              );
-            },
-            
-            // Blockquotes
-            blockquote: ({node, ...props}) => (
-              <blockquote className="border-l-4 border-gray-300 pl-4 my-4 italic" {...props} />
-            ),
-            
-            // Links and Images
-            a: ({node, href, ...props}) => (
-              <a 
-                href={href} 
-                className="text-blue-600 hover:underline" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                {...props}
-              />
-            ),
-            img: ({node, src, alt, ...props}) => (
-              <img 
-                src={src} 
-                alt={alt} 
-                className="max-w-full rounded my-4"
-                loading="lazy"
-                {...props}
-              />
-            ),
-            
-            // Tables
-            table: ({node, ...props}) => (
-              <div className="overflow-x-auto my-4">
-                <table className="min-w-full divide-y divide-gray-300" {...props} />
-              </div>
-            ),
-            thead: ({node, ...props}) => <thead className="bg-gray-100" {...props} />,
-            tbody: ({node, ...props}) => <tbody className="divide-y divide-gray-200" {...props} />,
-            tr: ({node, ...props}) => <tr {...props} />,
-            th: ({node, ...props}) => (
-              <th className="px-4 py-2 text-left font-bold" {...props} />
-            ),
-            td: ({node, ...props}) => <td className="px-4 py-2" {...props} />,
-            
-            // Horizontal Rule
-            hr: () => <hr className="my-4 border-t border-gray-300" />,
-            
-            // Task Lists
-            input: ({node, checked, ...props}) => (
-              <input 
-                type="checkbox" 
-                checked={checked} 
-                readOnly 
-                className="mr-2"
-                {...props}
-              />
-            ),
-          }}
-        >
-          {markdownContent}
-        </ReactMarkdown>
-      </div>
-    </div>
-  );
-}, (prevProps, nextProps) => prevProps.line === nextProps.line);
+    );
+  },
+  (prevProps, nextProps) => prevProps.line === nextProps.line
+);
 
 // Fix the messagesRef type issue
-const MemoizedMessages = memo(({ lines, messagesRef }: { 
-  lines: string[], 
-  messagesRef: React.RefObject<HTMLDivElement> 
-}) => (
-  <div 
-    ref={messagesRef}
-    className="flex-1 overflow-auto overscroll-contain p-2 sm:p-4 text-sm text-gray-800 font-mono bg-gray-100"
-  >
-    {lines.map((line, index) => (
-      <MemoizedMessageLine key={index} line={line} />
-    ))}
-  </div>
-));
+const MemoizedMessages = memo(
+  ({
+    lines,
+    messagesRef,
+  }: {
+    lines: string[];
+    messagesRef: React.RefObject<HTMLDivElement | null>;
+  }) => (
+    <div
+      ref={messagesRef}
+      className="flex-1 overflow-auto overscroll-contain p-2 sm:p-4 text-sm text-gray-800 font-mono bg-gray-100"
+    >
+      {lines.map((line, index) => (
+        <MemoizedMessageLine key={index} line={line} />
+      ))}
+    </div>
+  )
+);
 
 export default function Terminal() {
-  const [input, setInput] = useState('')
+  const [input, setInput] = useState("");
   const [lines, setLines] = useState<string[]>([
-    '(｡♥‿♥｡) Welcome! /ask/ me anything...'
-  ])
-  const [showEmotes, setShowEmotes] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
-  const messagesRef = useRef<HTMLDivElement>(null)
-  const searchInputRef = useRef<HTMLInputElement>(null)
-  const [selectedIndex, setSelectedIndex] = useState<number>(0)
-  const [commandIndex, setCommandIndex] = useState<number>(-1)
-  const [previewText, setPreviewText] = useState('')
-  const [isPreviewConfirmed, setIsPreviewConfirmed] = useState(false)
-  const inputRef = useRef<HTMLInputElement>(null)
-  const [isVimMode, setIsVimMode] = useState(false)
-  const [editorContent, setEditorContent] = useState('')
-  const [vimCommand, setVimCommand] = useState('')
-  const [showStyles, setShowStyles] = useState(false)
-  const [currentStyle, setCurrentStyle] = useState('normal')
-  const editorRef = useRef<HTMLTextAreaElement>(null)
+    "(｡♥‿♥｡) Welcome! /ask/ me anything...",
+  ]);
+  const [showEmotes, setShowEmotes] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const messagesRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const [selectedIndex, setSelectedIndex] = useState<number>(0);
+  const [commandIndex, setCommandIndex] = useState<number>(-1);
+  const [previewText, setPreviewText] = useState("");
+  const [isPreviewConfirmed, setIsPreviewConfirmed] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [isVimMode, setIsVimMode] = useState(false);
+  const [editorContent, setEditorContent] = useState("");
+  const [vimCommand, setVimCommand] = useState("");
+  const [showStyles, setShowStyles] = useState(false);
+  const [currentStyle, setCurrentStyle] = useState("normal");
+  const editorRef = useRef<HTMLTextAreaElement>(null);
   const [tags, setTags] = useState<Tag[]>([]);
   const [showTags, setShowTags] = useState(false);
-  const [selectedTag, setSelectedTag] = useState<string>('');
+  const [selectedTag, setSelectedTag] = useState<string>("");
   const [isCreatingTag, setIsCreatingTag] = useState(false);
-  const [tagSearchQuery, setTagSearchQuery] = useState('');
+  const [tagSearchQuery, setTagSearchQuery] = useState("");
   const tagInputRef = useRef<HTMLInputElement>(null);
-  const [currentTag, setCurrentTag] = useState<string>('');
+  const [currentTag, setCurrentTag] = useState<string>("");
 
   // Add state for the current animation
   const [currentAnimation, setCurrentAnimation] = useState({
-    text: '',
-    frame: '',
+    text: "",
+    frame: "",
     messageIndex: 0,
-    frameIndex: 0
+    frameIndex: 0,
   });
 
   // Add state for AI menu
   const [showAI, setShowAI] = useState(false);
-  const [selectedAICommand, setSelectedAICommand] = useState<string>('');
+  // Removed unused selectedAICommand state
 
   // Add admin state
   const [isAdmin, setIsAdmin] = useState(false);
 
-  // Add state for input focus
-  const [isInputFocused, setIsInputFocused] = useState(false);
+  // Removed unused isInputFocused state
 
   // Fetch tags on component mount
   useEffect(() => {
     const fetchTags = async () => {
-      const tagsCollection = collection(db, 'tags');
+      const tagsCollection = collection(db, "tags");
       const tagsSnapshot = await getDocs(tagsCollection);
-      const tagsList = tagsSnapshot.docs.map(doc => ({
+      const tagsList = tagsSnapshot.docs.map((doc) => ({
         id: doc.id,
-        ...doc.data()
+        ...doc.data(),
       })) as Tag[];
       setTags(tagsList);
     };
@@ -355,11 +411,11 @@ export default function Terminal() {
   useEffect(() => {
     const fetchPosts = async () => {
       try {
-        const postsCollection = collection(db, 'rssBlog');
+        const postsCollection = collection(db, "rssBlog");
         const postsSnapshot = await getDocs(postsCollection);
-        const posts = postsSnapshot.docs.map(doc => ({
+        const posts = postsSnapshot.docs.map((doc) => ({
           id: doc.id,
-          ...doc.data()
+          ...doc.data(),
         }));
 
         // Sort posts by createdAt
@@ -372,39 +428,43 @@ export default function Terminal() {
         // Format and add each post to lines
         const formattedPosts = sortedPosts.map((post: any) => {
           const date = post.createdAt?.toDate?.() || new Date(post.createdAt);
-          const tags = post.tags?.length > 0 ? ` - ${post.tags.join(',')} ` : '';
-          
+          const tags =
+            post.tags?.length > 0 ? ` - ${post.tags.join(",")} ` : "";
+
           // Format timestamp with tags
-          const time = date.toLocaleTimeString('en-US', { 
-            hour: 'numeric', 
-            minute: '2-digit',
-            hour12: true
+          const time = date.toLocaleTimeString("en-US", {
+            hour: "numeric",
+            minute: "2-digit",
+            hour12: true,
           });
-          const dateStr = date.toLocaleDateString('en-US', { 
-            month: '2-digit', 
-            day: '2-digit', 
-            year: 'numeric'
+          const dateStr = date.toLocaleDateString("en-US", {
+            month: "2-digit",
+            day: "2-digit",
+            year: "numeric",
           });
           const timezone = date.getTimezoneOffset() / -60;
-          
-          // If the post contains markdown or multiple lines, wrap it
-          const content = post.markdown || post.content.includes('\n')
-            ? `${post.content}\n<markdown>${post.content}</markdown>`
-            : post.content;
 
-          return `[${dateStr}${tags}- ${time}${timezone >= 0 ? '+' : '-'}${Math.abs(timezone)}] User: ${content}`;
+          // If the post contains markdown or multiple lines, wrap it
+          const content =
+            post.markdown || post.content.includes("\n")
+              ? `${post.content}\n<markdown>${post.content}</markdown>`
+              : post.content;
+
+          return `[${dateStr}${tags}- ${time}${
+            timezone >= 0 ? "+" : "-"
+          }${Math.abs(timezone)}] User: ${content}`;
         });
 
         // Update lines with welcome message and posts
-        setLines(prev => [
+        setLines((prev) => [
           prev[0], // Keep the welcome message
-          ...formattedPosts
+          ...formattedPosts,
         ]);
       } catch (error) {
-        console.error('Error fetching posts:', error);
-        setLines(prev => [
+        console.error("Error fetching posts:", error);
+        setLines((prev) => [
           ...prev,
-          formatMessage('Error loading previous messages.', 'system')
+          formatMessage("Error loading previous messages.", "system"),
         ]);
       }
     };
@@ -416,13 +476,13 @@ export default function Terminal() {
   const getDanceAnimation = (text: string) => {
     return {
       text,
-      frames: ['┌( ಠ‿ಠ)┘', '└( ಠ‿ಠ)┐', '┌( ಠ‿ಠ)┐', '└( ಠ‿ಠ)┘']
+      frames: ["┌( ಠ‿ಠ)┘", "└( ಠ‿ಠ)┐", "┌( ಠ‿ಠ)┐", "└( ಠ‿ಠ)┘"],
     };
   };
 
   // Remove or simplify the animation useEffect to just set the initial message
   useEffect(() => {
-    setLines(['(｡♥‿♥｡) Welcome! /ask/ me anything...']);
+    setLines(["(｡♥‿♥｡) Welcome! /ask/ me anything..."]);
   }, []);
 
   // Simplified tag creation
@@ -430,78 +490,89 @@ export default function Terminal() {
     const newTag = {
       name: tagName.toLowerCase(),
       createdAt: serverTimestamp(),
-      createdBy: 'JCRISP'
+      createdBy: "JCRISP",
     };
 
     try {
-      const docRef = await addDoc(collection(db, 'tags'), newTag);
-      setTags(prev => [...prev, { ...newTag, id: docRef.id, createdAt: new Date() }]);
+      const docRef = await addDoc(collection(db, "tags"), newTag);
+      setTags((prev) => [
+        ...prev,
+        { ...newTag, id: docRef.id, createdAt: new Date() },
+      ]);
       setIsCreatingTag(false);
       setSelectedTag(tagName);
     } catch (error) {
-      console.error('Error creating tag:', error);
+      console.error("Error creating tag:", error);
     }
   };
 
   // Update the formatMessage function to handle oomi's messages
-  const formatMessage = useCallback((message: string, tag?: string, messageTags: string[] = []) => {
-    const now = new Date()
-    const date = now.toLocaleDateString('en-US', { 
-      month: '2-digit', 
-      day: '2-digit', 
-      year: 'numeric'
-    })
-    const time = now.toLocaleTimeString('en-US', { 
-      hour: 'numeric', 
-      minute: '2-digit',
-      hour12: true
-    })
-    const timezone = now.getTimezoneOffset() / -60
-    
-    const tagString = messageTags[0] ? ` - ${messageTags[0]} ` : ''
-    const timestamp = `[${date}${tagString}- ${time}${timezone >= 0 ? '+' : '-'}${Math.abs(timezone)}]`
-    
-    if (tag === 'oomi') {
-      return `${timestamp} ${message}`; // Don't apply any transformations to oomi's messages
-    }
-    
-    // Don't transform markdown content with unicode styles
-    const shouldTransform = !containsMarkdown(message) && currentStyle !== 'normal'
-    const styledMessage = shouldTransform ? transformText(message, currentStyle) : message
-    
-    if (tag === 'USER') {
-      // If message contains markdown, don't wrap it again
-      if (containsMarkdown(message)) {
-        return `${timestamp} User: ${styledMessage}`
+  const formatMessage = useCallback(
+    (message: string, tag?: string, messageTags: string[] = []) => {
+      const now = new Date();
+      const date = now.toLocaleDateString("en-US", {
+        month: "2-digit",
+        day: "2-digit",
+        year: "numeric",
+      });
+      const time = now.toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      });
+      const timezone = now.getTimezoneOffset() / -60;
+
+      const tagString = messageTags[0] ? ` - ${messageTags[0]} ` : "";
+      const timestamp = `[${date}${tagString}- ${time}${
+        timezone >= 0 ? "+" : "-"
+      }${Math.abs(timezone)}]`;
+
+      if (tag === "oomi") {
+        return `${timestamp} ${message}`; // Don't apply any transformations to oomi's messages
       }
-      // Otherwise, wrap it in markdown tags for proper rendering
-      return `${timestamp} User: ${styledMessage}\n<markdown>${styledMessage}</markdown>`
-    }
-    return `${timestamp} ${styledMessage}`
-  }, [currentStyle]);
+
+      // Don't transform markdown content with unicode styles
+      const shouldTransform =
+        !containsMarkdown(message) && currentStyle !== "normal";
+      const styledMessage = shouldTransform
+        ? transformText(message, currentStyle)
+        : message;
+
+      if (tag === "USER") {
+        // If message contains markdown, don't wrap it again
+        if (containsMarkdown(message)) {
+          return `${timestamp} User: ${styledMessage}`;
+        }
+        // Otherwise, wrap it in markdown tags for proper rendering
+        return `${timestamp} User: ${styledMessage}\n<markdown>${styledMessage}</markdown>`;
+      }
+      return `${timestamp} ${styledMessage}`;
+    },
+    [currentStyle]
+  );
 
   // Update handleSavePost to properly store markdown content
   const handleSavePost = async (content: string, tags: string[]) => {
     if (!content.trim()) return;
-    
+
     const post = {
       content: content,
       tags,
       createdAt: serverTimestamp(),
-      createdBy: 'JCRISP',
-      markdown: containsMarkdown(content)
+      createdBy: "JCRISP",
+      markdown: containsMarkdown(content),
     };
 
     try {
-      await addDoc(collection(db, 'rssBlog'), post);
+      await addDoc(collection(db, "rssBlog"), post);
     } catch (error) {
-      console.error('Error saving post:', error);
+      console.error("Error saving post:", error);
     }
   };
 
   // Modify the input display to show single tag
   const getInputDisplay = useCallback(() => {
-    const tagDisplay = currentTag ? `[${currentTag}] ` : '';
+    const tagDisplay = currentTag ? `[${currentTag}] ` : "";
     return `~ ${tagDisplay}${input}`;
   }, [input, currentTag]);
 
@@ -509,400 +580,459 @@ export default function Terminal() {
   const handleTagSelect = (tagName: string) => {
     setCurrentTag(tagName);
     setShowTags(false);
-    setTagSearchQuery('');
+    setTagSearchQuery("");
   };
 
   // Move processCommand before handleCommand
   const processCommand = useCallback((command: string) => {
     // Add your command processing logic here
-    return ''; // Return empty string or appropriate response
+    return ""; // Return empty string or appropriate response
   }, []);
 
   // Update handleCommand to handle both AI and existing menu commands
-  const handleCommand = useCallback(async (command: string, isMenuCommand: boolean = false) => {
-    // Add admin authentication
-    if (command === '!admin_jcrisp') {
-      setIsAdmin(true);
-      setLines(prev => [...prev, 
-        formatMessage('Admin access granted', 'system')
-      ]);
-      setInput('');
-      return;
-    }
-
-    // Check for admin status before allowing chat/save operations
-    if (command.startsWith('/chat/')) {
-      if (!isAdmin) {
-        setLines(prev => [...prev, 
-          formatMessage('(>A<) Admin access required for chat functionality', 'oomi')
+  const handleCommand = useCallback(
+    async (command: string, isMenuCommand: boolean = false) => {
+      // Add admin authentication
+      if (command === adminPass) {
+        setIsAdmin(true);
+        setLines((prev) => [
+          ...prev,
+          formatMessage("Admin access granted", "system"),
         ]);
-        setInput('');
+        setInput("");
         return;
       }
-      
-      // Existing chat functionality for admins
-      const message = command.slice(6).trim();
-      if (message) {
-        try {
-          await addDoc(collection(db, 'messages'), {
-            content: message,
-            timestamp: serverTimestamp(),
-            user: 'admin'
-          });
-          // ... rest of chat handling
-        } catch (error) {
-          console.error('Error saving message:', error);
+
+      // Check for admin status before allowing chat/save operations
+      if (command.startsWith("/chat/")) {
+        if (!isAdmin) {
+          setLines((prev) => [
+            ...prev,
+            formatMessage(
+              "(>A<) Admin access required for chat functionality",
+              "oomi"
+            ),
+          ]);
+          setInput("");
+          return;
+        }
+
+        // Existing chat functionality for admins
+        const message = command.slice(6).trim();
+        if (message) {
+          try {
+            await addDoc(collection(db, "messages"), {
+              content: message,
+              timestamp: serverTimestamp(),
+              user: "admin",
+            });
+            // ... rest of chat handling
+          } catch (error) {
+            console.error("Error saving message:", error);
+          }
         }
       }
-    }
 
-    if (command === '/ai/') {
-      setShowEmotes(false);
-      setShowStyles(false);
-      setShowTags(false);
-      setShowAI(prev => !prev);
-      if (!isMenuCommand) setInput('');
-      return;
-    }
+      if (command === "/ai/") {
+        setShowEmotes(false);
+        setShowStyles(false);
+        setShowTags(false);
+        setShowAI((prev) => !prev);
+        if (!isMenuCommand) setInput("");
+        return;
+      }
 
-    if (command === '/emojis/') {
-      setShowAI(false);
-      setShowStyles(false);
-      setShowTags(false);
-      setShowEmotes(prev => !prev);
-      if (!isMenuCommand) setInput('');
-      return;
-    }
+      if (command === "/emojis/") {
+        setShowAI(false);
+        setShowStyles(false);
+        setShowTags(false);
+        setShowEmotes((prev) => !prev);
+        if (!isMenuCommand) setInput("");
+        return;
+      }
 
-    if (command === '/style/') {
-      setShowAI(false);
-      setShowEmotes(false);
-      setShowTags(false);
-      setShowStyles(prev => !prev);
-      if (!isMenuCommand) setInput('');
-      return;
-    }
+      if (command === "/style/") {
+        setShowAI(false);
+        setShowEmotes(false);
+        setShowTags(false);
+        setShowStyles((prev) => !prev);
+        if (!isMenuCommand) setInput("");
+        return;
+      }
 
-    if (command === '/tag/') {
-      setShowAI(false);
-      setShowEmotes(false);
-      setShowStyles(false);
-      setShowTags(prev => !prev);
-      if (!isMenuCommand) setInput('');
-      return;
-    }
+      if (command === "/tag/") {
+        setShowAI(false);
+        setShowEmotes(false);
+        setShowStyles(false);
+        setShowTags((prev) => !prev);
+        if (!isMenuCommand) setInput("");
+        return;
+      }
 
-    if (command === '/editor/') {
-      setIsVimMode(prev => !prev);
-      if (!isMenuCommand) setInput('');
-      return;
-    }
+      if (command === "/editor/") {
+        setIsVimMode((prev) => !prev);
+        if (!isMenuCommand) setInput("");
+        return;
+      }
 
-    // Handle AI-specific commands
-    if (command.startsWith('/ask/')) {
-      const question = command.slice(5).trim();
-      if (!question) {
-        setLines(prev => [...prev, 
-          formatMessage(`(｡♥‿♥｡) What would you like to know? Type your question after /ask/`, 'oomi')
+      // Handle AI-specific commands
+      if (command.startsWith("/ask/")) {
+        const question = command.slice(5).trim();
+        if (!question) {
+          setLines((prev) => [
+            ...prev,
+            formatMessage(
+              `(｡♥‿♥｡) What would you like to know? Type your question after /ask/`,
+              "oomi"
+            ),
+          ]);
+          return;
+        }
+
+        // Show thinking animation
+        const thinkingAnim = getDanceAnimation("*thinking*");
+        setCurrentAnimation({
+          text: thinkingAnim.text,
+          frame: thinkingAnim.frames[0],
+          messageIndex: 0,
+          frameIndex: 0,
+        });
+
+        // Get response from Anthropic using contextLocal
+        const response = await callAnthropic(question, contextLocal);
+
+        // Add the response to lines without saving to Firebase
+        setLines((prev) => [
+          ...prev,
+          formatMessage(command, "USER"),
+          formatMessage(`(^‿^) ${response}`, "oomi"),
+        ]);
+
+        // Clear thinking animation
+        setCurrentAnimation({
+          text: "",
+          frame: "",
+          messageIndex: 0,
+          frameIndex: 0,
+        });
+
+        setInput("");
+        return;
+      }
+
+      // Handle other AI menu commands
+      if (command === "/ai/help/") {
+        const response = await callAnthropic(
+          "List available commands and what they do",
+          contextLocal
+        );
+        setLines((prev) => [
+          ...prev,
+          formatMessage(`(｀･ω･´) ${response}`, "oomi"),
         ]);
         return;
       }
 
-      // Show thinking animation
-      const thinkingAnim = getDanceAnimation('*thinking*');
-      setCurrentAnimation({
-        text: thinkingAnim.text,
-        frame: thinkingAnim.frames[0],
-        messageIndex: 0,
-        frameIndex: 0
-      });
-
-      // Get response from Anthropic using contextLocal
-      const response = await callAnthropic(question, contextLocal);
-      
-      // Add the response to lines without saving to Firebase
-      setLines(prev => [...prev, 
-        formatMessage(command, 'USER'),
-        formatMessage(`(^‿^) ${response}`, 'oomi')
-      ]);
-      
-      // Clear thinking animation
-      setCurrentAnimation({
-        text: '',
-        frame: '',
-        messageIndex: 0,
-        frameIndex: 0
-      });
-
-      setInput('');
-      return;
-    }
-
-    // Handle other AI menu commands
-    if (command === '/ai/help/') {
-      const response = await callAnthropic("List available commands and what they do", contextLocal);
-      setLines(prev => [...prev, formatMessage(`(｀･ω･´) ${response}`, 'oomi')]);
-      return;
-    }
-
-    if (command === '/ai/joke/') {
-      const response = await callAnthropic("Tell a programming joke related to Justin's background", contextLocal);
-      setLines(prev => [...prev, formatMessage(`(^‿^) ${response}`, 'oomi')]);
-      return;
-    }
-
-    // Only save to Firestore if admin is authenticated
-    if (!isMenuCommand) {
-      const response = processCommand(command)
-      setLines(prev => [...prev, formatMessage(command, 'USER', currentTag ? [currentTag] : []), response])
-      
-      // Only save to Firestore if admin
-      if (isAdmin) {
-        handleSavePost(command, currentTag ? [currentTag] : []);
-      } else {
-        // Add message for unauthorized users
-        setLines(prev => [...prev, 
-          formatMessage('(>A<) Please login as admin to save messages. Your message is visible but not saved.', 'oomi')
+      if (command === "/ai/joke/") {
+        const response = await callAnthropic(
+          "Tell a programming joke related to Justin's background",
+          contextLocal
+        );
+        setLines((prev) => [
+          ...prev,
+          formatMessage(`(^‿^) ${response}`, "oomi"),
         ]);
+        return;
       }
-      
-      setInput('')
-      setCurrentTag('') 
-    }
-    setCommandIndex(-1)
-  }, [processCommand, formatMessage, currentTag, handleSavePost, isAdmin]);
+
+      // Only save to Firestore if admin is authenticated
+      if (!isMenuCommand) {
+        const response = processCommand(command);
+        setLines((prev) => [
+          ...prev,
+          formatMessage(command, "USER", currentTag ? [currentTag] : []),
+          response,
+        ]);
+
+        // Only save to Firestore if admin
+        if (isAdmin) {
+          handleSavePost(command, currentTag ? [currentTag] : []);
+        } else {
+          // Add message for unauthorized users
+          setLines((prev) => [
+            ...prev,
+            formatMessage(
+              "(>A<) Please login as admin to save messages. Your message is visible but not saved.",
+              "oomi"
+            ),
+          ]);
+        }
+
+        setInput("");
+        setCurrentTag("");
+      }
+      setCommandIndex(-1);
+    },
+    [processCommand, formatMessage, currentTag, handleSavePost, isAdmin]
+  );
 
   // Update handleKeyDown to handle Vim commands properly
-  const handleKeyDown = useCallback((event: KeyboardEvent) => {
-    if (showTags || showEmotes || showStyles) return;
+  const handleKeyDown = useCallback(
+    (event: KeyboardEvent) => {
+      if (showTags || showEmotes || showStyles) return;
 
-    if (isVimMode) {
-      if (event.key === 'Escape') {
-        if (!vimCommand) {
-          event.preventDefault();
-          setVimCommand(':');
-        }
-      } else if (vimCommand) {
-        event.preventDefault();
-        if (event.key === 'Enter') {
-          const cmd = vimCommand.toLowerCase();
-          if (cmd === ':w' || cmd === ':write') {
-            // Add to terminal lines first
-            setLines(prev => [...prev, formatMessage(editorContent, 'USER', currentTag ? [currentTag] : [])]);
-            // Then save to database
-            handleSavePost(editorContent, currentTag ? [currentTag] : []);
-            setVimCommand('');
-          } else if (cmd === ':q' || cmd === ':quit') {
-            setIsVimMode(false);
-            setVimCommand('');
-            setEditorContent('');
-          } else if (cmd === ':wq') {
-            // Add to terminal lines first, then update state
-            const formattedMessage = formatMessage(editorContent, 'USER', currentTag ? [currentTag] : []);
-            setLines(prev => [...prev, formattedMessage]);
-            handleSavePost(editorContent, currentTag ? [currentTag] : []);
-            
-            // Use a callback to ensure state updates happen in order
-            setTimeout(() => {
-              setIsVimMode(false);
-              setVimCommand('');
-              setEditorContent('');
-              // Force scroll to bottom after state updates
-              if (messagesRef.current) {
-                messagesRef.current.scrollTop = messagesRef.current.scrollHeight;
-              }
-            }, 0);
+      if (isVimMode) {
+        if (event.key === "Escape") {
+          if (!vimCommand) {
+            event.preventDefault();
+            setVimCommand(":");
           }
-        } else if (event.key === 'Escape') {
-          setVimCommand('');
-        } else if (event.key.length === 1) {
-          setVimCommand(prev => prev + event.key);
-        } else if (event.key === 'Backspace') {
-          setVimCommand(prev => prev.slice(0, -1));
+        } else if (vimCommand) {
+          event.preventDefault();
+          if (event.key === "Enter") {
+            const cmd = vimCommand.toLowerCase();
+            if (cmd === ":w" || cmd === ":write") {
+              // Add to terminal lines first
+              setLines((prev) => [
+                ...prev,
+                formatMessage(
+                  editorContent,
+                  "USER",
+                  currentTag ? [currentTag] : []
+                ),
+              ]);
+              // Then save to database
+              handleSavePost(editorContent, currentTag ? [currentTag] : []);
+              setVimCommand("");
+            } else if (cmd === ":q" || cmd === ":quit") {
+              setIsVimMode(false);
+              setVimCommand("");
+              setEditorContent("");
+            } else if (cmd === ":wq") {
+              // Add to terminal lines first, then update state
+              const formattedMessage = formatMessage(
+                editorContent,
+                "USER",
+                currentTag ? [currentTag] : []
+              );
+              setLines((prev) => [...prev, formattedMessage]);
+              handleSavePost(editorContent, currentTag ? [currentTag] : []);
+
+              // Use a callback to ensure state updates happen in order
+              setTimeout(() => {
+                setIsVimMode(false);
+                setVimCommand("");
+                setEditorContent("");
+                // Force scroll to bottom after state updates
+                if (messagesRef.current) {
+                  messagesRef.current.scrollTop =
+                    messagesRef.current.scrollHeight;
+                }
+              }, 0);
+            }
+          } else if (event.key === "Escape") {
+            setVimCommand("");
+          } else if (event.key.length === 1) {
+            setVimCommand((prev) => prev + event.key);
+          } else if (event.key === "Backspace") {
+            setVimCommand((prev) => prev.slice(0, -1));
+          }
         }
+        return;
       }
-      return;
-    }
 
-    if (showEmotes) return
+      if (showEmotes) return;
 
-    if (event.key === 'Tab') {
-      event.preventDefault()
-      setCommandIndex(prev => {
-        const nextIndex = prev + 1 >= MENU_COMMANDS.length ? 0 : prev + 1
-        setInput('/' + MENU_COMMANDS[nextIndex].toLowerCase() + '/')
-        return nextIndex
-      })
-    } else if (event.key === 'Enter') {
-      const command = input.toLowerCase()
-      if (command === '/style/') {
-        setShowStyles(true)
-        setInput('')
-      } else if (command === '/emojis/') {
-        setShowEmotes(true)
-        setInput('')
-      } else if (command === '/vi' || command === '/vim' || command === '/editor/') {
-        setIsVimMode(true)
-        setInput('')
-      } else {
-        handleCommand(command) // Only call handleCommand for non-menu commands
+      if (event.key === "Tab") {
+        event.preventDefault();
+        setCommandIndex((prev) => {
+          const nextIndex = prev + 1 >= MENU_COMMANDS.length ? 0 : prev + 1;
+          setInput("/" + MENU_COMMANDS[nextIndex].toLowerCase() + "/");
+          return nextIndex;
+        });
+      } else if (event.key === "Enter") {
+        const command = input.toLowerCase();
+        if (command === "/style/") {
+          setShowStyles(true);
+          setInput("");
+        } else if (command === "/emojis/") {
+          setShowEmotes(true);
+          setInput("");
+        } else if (
+          command === "/vi" ||
+          command === "/vim" ||
+          command === "/editor/"
+        ) {
+          setIsVimMode(true);
+          setInput("");
+        } else {
+          handleCommand(command); // Only call handleCommand for non-menu commands
+        }
+        setCommandIndex(-1);
+      } else if (event.key === "Backspace") {
+        setInput((prev) => prev.slice(0, -1));
+        if (input.length <= 1) {
+          setCommandIndex(-1);
+        }
+      } else if (event.key.length === 1) {
+        setInput((prev) => prev + event.key);
+        setCommandIndex(-1); // Reset command index when typing
       }
-      setCommandIndex(-1)
-    } else if (event.key === 'Backspace') {
-      setInput(prev => prev.slice(0, -1))
-      if (input.length <= 1) {
-        setCommandIndex(-1)
-      }
-    } else if (event.key.length === 1) {
-      setInput(prev => prev + event.key)
-      setCommandIndex(-1)  // Reset command index when typing
-    }
-  }, [
-    input, 
-    handleCommand, 
-    showEmotes, 
-    formatMessage, 
-    isVimMode, 
-    editorContent, 
-    vimCommand, 
-    showStyles, 
-    showTags,
-    handleSavePost
-  ]);
+    },
+    [
+      input,
+      handleCommand,
+      showEmotes,
+      formatMessage,
+      isVimMode,
+      editorContent,
+      vimCommand,
+      showStyles,
+      showTags,
+      handleSavePost,
+    ]
+  );
 
   const handleEmoticonClick = (emoticon: string) => {
-    setInput(prev => prev + emoticon + ' ')
-    setShowEmotes(false)
-    setSearchQuery('')
-  }
+    setInput((prev) => prev + emoticon + " ");
+    setShowEmotes(false);
+    setSearchQuery("");
+  };
 
-  const handleSearchKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Escape') {
-      setShowEmotes(false)
-      setSearchQuery('')
-      setSelectedIndex(0)
-      setPreviewText('')
-      setIsPreviewConfirmed(false)
-    } else if (event.key === 'Tab') {
-      event.preventDefault()
+  const handleSearchKeyDown = (
+    event: React.KeyboardEvent<HTMLInputElement>
+  ) => {
+    if (event.key === "Escape") {
+      setShowEmotes(false);
+      setSearchQuery("");
+      setSelectedIndex(0);
+      setPreviewText("");
+      setIsPreviewConfirmed(false);
+    } else if (event.key === "Tab") {
+      event.preventDefault();
       if (filteredEmoticons.length > 0) {
         if (event.shiftKey) {
-          setSelectedIndex((prev) => 
+          setSelectedIndex((prev) =>
             prev > 0 ? prev - 1 : filteredEmoticons.length - 1
-          )
+          );
         } else {
-          setSelectedIndex((prev) => 
+          setSelectedIndex((prev) =>
             prev < filteredEmoticons.length - 1 ? prev + 1 : 0
-          )
+          );
         }
         // Update preview text instead of search query
-        setPreviewText(filteredEmoticons[selectedIndex].name)
-        setIsPreviewConfirmed(false)
+        setPreviewText(filteredEmoticons[selectedIndex].name);
+        setIsPreviewConfirmed(false);
       }
-    } else if (event.key === 'Enter') {
-      event.preventDefault()
+    } else if (event.key === "Enter") {
+      event.preventDefault();
       if (filteredEmoticons.length > 0) {
         if (!isPreviewConfirmed) {
           // First enter: confirm the preview
-          setSearchQuery(previewText)
-          setIsPreviewConfirmed(true)
+          setSearchQuery(previewText);
+          setIsPreviewConfirmed(true);
         } else {
           // Second enter: select the emoticon
-          handleEmoticonClick(filteredEmoticons[selectedIndex].face)
-          setPreviewText('')
-          setIsPreviewConfirmed(false)
+          handleEmoticonClick(filteredEmoticons[selectedIndex].face);
+          setPreviewText("");
+          setIsPreviewConfirmed(false);
         }
       }
     }
-  }
+  };
 
   // Reset preview when search query changes manually
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value)
-    setPreviewText('')
-    setIsPreviewConfirmed(false)
-  }
+    setSearchQuery(e.target.value);
+    setPreviewText("");
+    setIsPreviewConfirmed(false);
+  };
 
   useEffect(() => {
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [handleKeyDown])
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleKeyDown]);
 
   useEffect(() => {
     if (showEmotes && searchInputRef.current) {
-      searchInputRef.current.focus()
+      searchInputRef.current.focus();
     }
-  }, [showEmotes])
+  }, [showEmotes]);
 
-  const filteredEmoticons = EMOTICONS.filter(emoticon => 
-    emoticon.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    emoticon.face.includes(searchQuery)
-  )
+  const filteredEmoticons = EMOTICONS.filter(
+    (emoticon) =>
+      emoticon.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      emoticon.face.includes(searchQuery)
+  );
 
   useEffect(() => {
     if (messagesRef.current) {
-      messagesRef.current.scrollTop = messagesRef.current.scrollHeight
+      messagesRef.current.scrollTop = messagesRef.current.scrollHeight;
     }
-  }, [lines, showEmotes])
+  }, [lines, showEmotes]);
 
   useEffect(() => {
-    setSelectedIndex(0)
-  }, [searchQuery, showEmotes])
+    setSelectedIndex(0);
+  }, [searchQuery, showEmotes]);
 
   const getCaretPosition = () => {
     if (inputRef.current) {
-      const rect = inputRef.current.getBoundingClientRect()
-      const caretPos = inputRef.current.selectionStart || searchQuery.length
-      const textBeforeCaret = searchQuery.substring(0, caretPos)
-      const tempSpan = document.createElement('span')
-      tempSpan.style.font = window.getComputedStyle(inputRef.current).font
-      tempSpan.style.visibility = 'hidden'
-      tempSpan.style.position = 'absolute'
-      tempSpan.textContent = `/emojis/ ${textBeforeCaret}`
-      document.body.appendChild(tempSpan)
-      const caretX = tempSpan.getBoundingClientRect().width
-      document.body.removeChild(tempSpan)
-      return caretX
+      const rect = inputRef.current.getBoundingClientRect();
+      const caretPos = inputRef.current.selectionStart || searchQuery.length;
+      const textBeforeCaret = searchQuery.substring(0, caretPos);
+      const tempSpan = document.createElement("span");
+      tempSpan.style.font = window.getComputedStyle(inputRef.current).font;
+      tempSpan.style.visibility = "hidden";
+      tempSpan.style.position = "absolute";
+      tempSpan.textContent = `/emojis/ ${textBeforeCaret}`;
+      document.body.appendChild(tempSpan);
+      const caretX = tempSpan.getBoundingClientRect().width;
+      document.body.removeChild(tempSpan);
+      return caretX;
     }
-    return 0
-  }
+    return 0;
+  };
 
   // Add helper function to check if text contains markdown
   const containsMarkdown = (text: string): boolean => {
     const markdownPatterns = [
-      /\*\*(.*?)\*\*/,  // bold
-      /\*(.*?)\*/,      // italic
+      /\*\*(.*?)\*\*/, // bold
+      /\*(.*?)\*/, // italic
       /\[(.*?)\]\((.*?)\)/, // links
       /```[\s\S]*?```/, // code blocks
-      /#{1,6}\s/,       // headers
-      /^\s*[-*+]\s/m,   // lists
-      /^\s*\d+\.\s/m,   // numbered lists
-    ]
-    return markdownPatterns.some(pattern => pattern.test(text))
-  }
+      /#{1,6}\s/, // headers
+      /^\s*[-*+]\s/m, // lists
+      /^\s*\d+\.\s/m, // numbered lists
+    ];
+    return markdownPatterns.some((pattern) => pattern.test(text));
+  };
 
   // Focus editor when entering Vim mode
   useEffect(() => {
     if (isVimMode && editorRef.current) {
-      editorRef.current.focus()
+      editorRef.current.focus();
     }
-  }, [isVimMode])
+  }, [isVimMode]);
 
   // Transform menu text based on current style
   const getStyledMenuText = (text: string) => {
-    return text === 'STYLE' ? transformText(text.toLowerCase(), currentStyle) : text
-  }
+    return text === "STYLE"
+      ? transformText(text.toLowerCase(), currentStyle)
+      : text;
+  };
 
   // Add new handler for Vim editor emoticon clicks
   const handleVimEmoticonClick = (emoticon: string) => {
     if (editorRef.current) {
       const start = editorRef.current.selectionStart;
       const end = editorRef.current.selectionEnd;
-      const newContent = editorContent.substring(0, start) + 
-                        emoticon + ' ' + 
-                        editorContent.substring(end);
+      const newContent =
+        editorContent.substring(0, start) +
+        emoticon +
+        " " +
+        editorContent.substring(end);
       setEditorContent(newContent);
-      
+
       // Set cursor position after emoticon
       setTimeout(() => {
         if (editorRef.current) {
@@ -914,7 +1044,7 @@ export default function Terminal() {
       }, 0);
     }
     setShowEmotes(false);
-    setSearchQuery('');
+    setSearchQuery("");
   };
 
   // Add new function for Vim style changes
@@ -923,13 +1053,14 @@ export default function Terminal() {
       const start = editorRef.current.selectionStart;
       const end = editorRef.current.selectionEnd;
       const selectedText = editorContent.substring(start, end);
-      
+
       if (selectedText) {
         // Transform selected text
         const transformedText = transformText(selectedText, style);
-        const newContent = editorContent.substring(0, start) + 
-                          transformedText + 
-                          editorContent.substring(end);
+        const newContent =
+          editorContent.substring(0, start) +
+          transformedText +
+          editorContent.substring(end);
         setEditorContent(newContent);
       } else {
         // If no text is selected, just set the style for future input
@@ -941,19 +1072,19 @@ export default function Terminal() {
 
   // Modify the editor onChange handler to apply current style
   const handleEditorChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newText = e.target.value
-    const prevText = editorContent
-    
+    const newText = e.target.value;
+    const prevText = editorContent;
+
     // Only transform the newly added text
     if (newText.length > prevText.length) {
-      const diff = newText.length - prevText.length
-      const newChars = newText.slice(-diff)
-      const transformedChars = transformText(newChars, currentStyle)
-      setEditorContent(newText.slice(0, -diff) + transformedChars)
+      const diff = newText.length - prevText.length;
+      const newChars = newText.slice(-diff);
+      const transformedChars = transformText(newChars, currentStyle);
+      setEditorContent(newText.slice(0, -diff) + transformedChars);
     } else {
-      setEditorContent(newText)
+      setEditorContent(newText);
     }
-  }
+  };
 
   // Update the TagMenu positioning and styling
   const TagMenu = () => (
@@ -966,28 +1097,32 @@ export default function Terminal() {
           onChange={(e) => setTagSearchQuery(e.target.value)}
           onKeyDown={(e) => {
             e.stopPropagation();
-            if (e.key === 'Enter' && tagSearchQuery.trim()) {
+            if (e.key === "Enter" && tagSearchQuery.trim()) {
               if (isCreatingTag) {
                 handleCreateTag(tagSearchQuery.trim());
-                setTagSearchQuery('');
+                setTagSearchQuery("");
               }
-            } else if (e.key === 'Escape') {
+            } else if (e.key === "Escape") {
               setShowTags(false);
-              setTagSearchQuery('');
+              setTagSearchQuery("");
             }
           }}
-          placeholder={isCreatingTag ? "Type new tag name and press Enter..." : "Search tags..."}
+          placeholder={
+            isCreatingTag
+              ? "Type new tag name and press Enter..."
+              : "Search tags..."
+          }
           className="w-full p-2 border border-gray-300 rounded"
           autoFocus
         />
       </div>
-      
+
       <div className="p-4 max-h-[300px] overflow-y-auto">
         {currentTag && (
           <button
             onClick={() => {
-              setCurrentTag('');
-              setTagSearchQuery('');
+              setCurrentTag("");
+              setTagSearchQuery("");
               setShowTags(false);
             }}
             className="w-full p-2 text-left hover:bg-gray-200 text-red-600 mb-2 border-b border-gray-200"
@@ -995,39 +1130,39 @@ export default function Terminal() {
             [x] Remove #{currentTag}
           </button>
         )}
-        
+
         {tags.length === 0 || isCreatingTag ? (
           <div className="text-gray-600">
-            {isCreatingTag ? 
-              "Type your new tag name above..." : 
+            {isCreatingTag ? (
+              "Type your new tag name above..."
+            ) : (
               <button
                 onClick={() => setIsCreatingTag(true)}
                 className="w-full p-2 text-left hover:bg-gray-200"
               >
                 Create your first tag...
               </button>
-            }
+            )}
           </div>
         ) : (
           <>
             {tags
-              .filter(tag => tag.name.includes(tagSearchQuery.toLowerCase()))
-              .map(tag => (
+              .filter((tag) => tag.name.includes(tagSearchQuery.toLowerCase()))
+              .map((tag) => (
                 <button
                   key={tag.id}
                   onClick={() => {
                     setCurrentTag(tag.name);
                     setShowTags(false);
-                    setTagSearchQuery('');
+                    setTagSearchQuery("");
                   }}
                   className={`w-full p-2 text-left hover:bg-gray-200 ${
-                    currentTag === tag.name ? 'bg-gray-200' : ''
+                    currentTag === tag.name ? "bg-gray-200" : ""
                   }`}
                 >
                   #{tag.name}
                 </button>
-              ))
-            }
+              ))}
             {isCreatingTag ? null : (
               <button
                 onClick={() => setIsCreatingTag(true)}
@@ -1054,11 +1189,11 @@ export default function Terminal() {
           }}
           className={`w-full px-2 py-1 text-gray-800 text-xs font-mono focus:outline-none 
                    flex items-center justify-center ${
-                     (button === 'STYLE' && showStyles) ||
-                     (button === 'EMOJIS' && showEmotes) ||
-                     (button === 'TAG' && showTags)
-                       ? 'bg-gray-200'
-                       : ''
+                     (button === "STYLE" && showStyles) ||
+                     (button === "EMOJIS" && showEmotes) ||
+                     (button === "TAG" && showTags)
+                       ? "bg-gray-200"
+                       : ""
                    }`}
         >
           [{getStyledMenuText(button)}]
@@ -1070,10 +1205,13 @@ export default function Terminal() {
   // Update the CurrentAnimation component to only show if there's content
   const CurrentAnimation = () => {
     if (!currentAnimation.text || !currentAnimation.frame) return null;
-    
+
     return (
       <div className="mb-4 font-mono animate-fade-in">
-        {formatMessage(`${currentAnimation.frame} ${currentAnimation.text}`, 'oomi')}
+        {formatMessage(
+          `${currentAnimation.frame} ${currentAnimation.text}`,
+          "oomi"
+        )}
       </div>
     );
   };
@@ -1087,36 +1225,51 @@ export default function Terminal() {
             <button
               key={cmd.command}
               onClick={async () => {
-                setSelectedAICommand(cmd.command);
                 setShowAI(false);
-                
+
                 // Show thinking animation
-                const thinkingAnim = getDanceAnimation('*processing command*');
+                const thinkingAnim = getDanceAnimation("*processing command*");
                 setCurrentAnimation({
                   text: thinkingAnim.text,
                   frame: thinkingAnim.frames[0],
                   messageIndex: 0,
-                  frameIndex: 0
+                  frameIndex: 0,
                 });
 
-                if (cmd.command === 'help') {
-                  const response = await callAnthropic("List available commands and what they do", contextLocal);
-                  setLines(prev => [...prev, formatMessage(`(｀･ω･´) ${response}`, 'oomi')]);
-                } else if (cmd.command === 'joke') {
-                  const response = await callAnthropic("Tell a programming joke related to Justin's background", contextLocal);
-                  setLines(prev => [...prev, formatMessage(`(^‿^) ${response}`, 'oomi')]);
-                } else if (cmd.command === 'ask') {
-                  setLines(prev => [...prev, 
-                    formatMessage(`(｡♥‿♥｡) What would you like to know? Type your question after /ask/`, 'oomi')
+                if (cmd.command === "help") {
+                  const response = await callAnthropic(
+                    "List available commands and what they do",
+                    contextLocal
+                  );
+                  setLines((prev) => [
+                    ...prev,
+                    formatMessage(`(｀･ω･´) ${response}`, "oomi"),
+                  ]);
+                } else if (cmd.command === "joke") {
+                  const response = await callAnthropic(
+                    "Tell a programming joke related to Justin's background",
+                    contextLocal
+                  );
+                  setLines((prev) => [
+                    ...prev,
+                    formatMessage(`(^‿^) ${response}`, "oomi"),
+                  ]);
+                } else if (cmd.command === "ask") {
+                  setLines((prev) => [
+                    ...prev,
+                    formatMessage(
+                      `(｡♥‿♥｡) What would you like to know? Type your question after /ask/`,
+                      "oomi"
+                    ),
                   ]);
                 }
 
                 // Clear thinking animation
                 setCurrentAnimation({
-                  text: '',
-                  frame: '',
+                  text: "",
+                  frame: "",
                   messageIndex: 0,
-                  frameIndex: 0
+                  frameIndex: 0,
                 });
               }}
               className="p-4 text-left hover:bg-gray-200 rounded-lg transition-colors flex items-center space-x-4"
@@ -1136,44 +1289,46 @@ export default function Terminal() {
   // Add useEffect to handle viewport adjustments
   useEffect(() => {
     // Prevent viewport adjustments when keyboard appears
-    const meta = document.createElement('meta');
-    meta.name = 'viewport';
-    meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, height=' + window.innerHeight;
+    const meta = document.createElement("meta");
+    meta.name = "viewport";
+    meta.content =
+      "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, height=" +
+      window.innerHeight;
     document.head.appendChild(meta);
 
     // Prevent scroll on body when keyboard opens
     const handleFocus = () => {
-      document.body.style.position = 'fixed';
-      document.body.style.width = '100%';
+      document.body.style.position = "fixed";
+      document.body.style.width = "100%";
     };
 
     const handleBlur = () => {
-      document.body.style.position = '';
-      document.body.style.width = '';
+      document.body.style.position = "";
+      document.body.style.width = "";
     };
 
     if (inputRef.current) {
-      inputRef.current.addEventListener('focus', handleFocus);
-      inputRef.current.addEventListener('blur', handleBlur);
+      inputRef.current.addEventListener("focus", handleFocus);
+      inputRef.current.addEventListener("blur", handleBlur);
     }
 
     return () => {
       document.head.removeChild(meta);
       if (inputRef.current) {
-        inputRef.current.removeEventListener('focus', handleFocus);
-        inputRef.current.removeEventListener('blur', handleBlur);
+        inputRef.current.removeEventListener("focus", handleFocus);
+        inputRef.current.removeEventListener("blur", handleBlur);
       }
     };
   }, []);
 
   return (
     <div className="flex flex-col justify-start items-center w-full h-full">
-      <div 
+      <div
         className="w-full max-w-[800px] flex flex-col relative terminal-container"
         style={{
-          height: '100%',
+          height: "100%",
           minHeight: 0, // Critical for flexbox scrolling
-          maxHeight: '100%',
+          maxHeight: "100%",
         }}
       >
         {isVimMode ? (
@@ -1188,7 +1343,9 @@ export default function Terminal() {
                   className="w-full h-full p-4 bg-gray-100 text-gray-800 resize-none focus:outline-none font-mono text-sm"
                   placeholder="// Enter markdown text here..."
                   spellCheck="false"
-                  style={{ zIndex: showEmotes || showStyles || showTags ? 0 : 1 }}
+                  style={{
+                    zIndex: showEmotes || showStyles || showTags ? 0 : 1,
+                  }}
                 />
                 {vimCommand && (
                   <div className="absolute bottom-0 left-0 right-0 bg-gray-100 text-gray-800 p-2 border-t border-gray-700 font-mono">
@@ -1199,7 +1356,7 @@ export default function Terminal() {
 
                 {/* Show menus in editor when active */}
                 {showTags && <TagMenu />}
-                
+
                 {/* Style menu in editor */}
                 {showStyles && (
                   <div className="absolute top-0 left-0 right-0 bg-gray-100 max-h-[400px] flex flex-col font-mono border-t-2 border-gray-800">
@@ -1217,11 +1374,13 @@ export default function Terminal() {
                               setShowStyles(false);
                             }}
                             className={`flex flex-col items-center p-4 hover:bg-gray-200 rounded-lg transition-colors ${
-                              currentStyle === style.name ? 'bg-gray-200' : ''
+                              currentStyle === style.name ? "bg-gray-200" : ""
                             }`}
                           >
                             <span className="text-lg mb-2">{style.style}</span>
-                            <span className="text-sm text-gray-600">{style.name}</span>
+                            <span className="text-sm text-gray-600">
+                              {style.name}
+                            </span>
                           </button>
                         ))}
                       </div>
@@ -1257,10 +1416,14 @@ export default function Terminal() {
                               }
                             }}
                             className={`flex flex-col items-center ${
-                              index === selectedIndex ? 'bg-gray-200 rounded-lg' : ''
+                              index === selectedIndex
+                                ? "bg-gray-200 rounded-lg"
+                                : ""
                             }`}
                           >
-                            <span className="text-2xl mb-2">{emoticon.face}</span>
+                            <span className="text-2xl mb-2">
+                              {emoticon.face}
+                            </span>
                             <span className="text-sm">{emoticon.name}</span>
                           </button>
                         ))}
@@ -1278,30 +1441,60 @@ export default function Terminal() {
                   </div>
                 )}
                 <div className="p-4">
-                  <ReactMarkdown 
+                  <ReactMarkdown
                     className="prose prose-sm max-w-none break-words"
                     components={{
-                      p: ({node, ...props}) => <div className="my-2" {...props} />,
-                      code: ({node, inline, className, children, ...props}) => {
-                        if (inline) {
-                          return <code className="font-mono text-sm" {...props}>{children}</code>
+                      p: ({ node, ...props }) => (
+                        <div className="my-2" {...props} />
+                      ),
+                      code: ({ node, className, children, ...props }: any) => {
+                        // Check if it's inline code vs code block
+                        const isInline =
+                          !className || !className.includes("language-");
+                        if (isInline) {
+                          return (
+                            <code className="font-mono text-sm" {...props}>
+                              {children}
+                            </code>
+                          );
                         }
                         return (
                           <pre className="bg-gray-100 p-2 rounded my-2 overflow-x-auto max-w-full">
-                            <code className="font-mono text-sm" {...props}>{children}</code>
+                            <code className="font-mono text-sm" {...props}>
+                              {children}
+                            </code>
                           </pre>
-                        )
+                        );
                       },
-                      ul: ({node, ...props}) => <ul className="list-disc ml-4 my-2" {...props} />,
-                      ol: ({node, ...props}) => <ol className="list-decimal ml-4 my-2" {...props} />,
-                      blockquote: ({node, ...props}) => (
-                        <blockquote className="border-l-4 border-gray-300 pl-4 my-2 italic" {...props} />
+                      ul: ({ node, ...props }) => (
+                        <ul className="list-disc ml-4 my-2" {...props} />
                       ),
-                      h1: ({node, ...props}) => <h1 className="text-xl font-bold my-3" {...props} />,
-                      h2: ({node, ...props}) => <h2 className="text-lg font-bold my-2" {...props} />,
-                      h3: ({node, ...props}) => <h3 className="text-base font-bold my-2" {...props} />,
-                      a: ({node, href, ...props}) => (
-                        <a href={href} className="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer" {...props} />
+                      ol: ({ node, ...props }) => (
+                        <ol className="list-decimal ml-4 my-2" {...props} />
+                      ),
+                      blockquote: ({ node, ...props }) => (
+                        <blockquote
+                          className="border-l-4 border-gray-300 pl-4 my-2 italic"
+                          {...props}
+                        />
+                      ),
+                      h1: ({ node, ...props }) => (
+                        <h1 className="text-xl font-bold my-3" {...props} />
+                      ),
+                      h2: ({ node, ...props }) => (
+                        <h2 className="text-lg font-bold my-2" {...props} />
+                      ),
+                      h3: ({ node, ...props }) => (
+                        <h3 className="text-base font-bold my-2" {...props} />
+                      ),
+                      a: ({ node, href, ...props }) => (
+                        <a
+                          href={href}
+                          className="text-blue-600 hover:underline"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          {...props}
+                        />
                       ),
                     }}
                   >
@@ -1323,12 +1516,12 @@ export default function Terminal() {
                     }}
                     className={`w-full px-2 py-1 text-gray-800 text-xs font-mono focus:outline-none 
                              flex items-center justify-center ${
-                               (button === 'STYLE' && showStyles) ||
-                               (button === 'EMOJIS' && showEmotes) ||
-                               (button === 'TAG' && showTags)
-                                 ? 'bg-gray-200'
-                                 : ''
-                               }`}
+                               (button === "STYLE" && showStyles) ||
+                               (button === "EMOJIS" && showEmotes) ||
+                               (button === "TAG" && showTags)
+                                 ? "bg-gray-200"
+                                 : ""
+                             }`}
                   >
                     [{getStyledMenuText(button)}]
                   </button>
@@ -1338,12 +1531,13 @@ export default function Terminal() {
 
             {/* Vim status line */}
             <div className="bg-gray-700 text-white px-4 py-1 font-mono text-sm">
-              {vimCommand || 'Press : for commands -- :w (write) :q (quit) :wq (write & quit)'}
+              {vimCommand ||
+                "Press : for commands -- :w (write) :q (quit) :wq (write & quit)"}
             </div>
           </div>
         ) : (
           <div className="flex flex-col h-full relative">
-            <div 
+            <div
               ref={messagesRef}
               className="flex-1 overflow-auto overscroll-contain p-2 sm:p-4 text-sm sm:text-base text-gray-800 font-mono bg-gray-100"
               style={{ minHeight: 0 }} // Critical for flexbox scrolling
@@ -1364,7 +1558,11 @@ export default function Terminal() {
                         setShowStyles(false);
                       }}
                       className={`px-2 py-1 text-gray-800 text-sm font-mono hover:bg-gray-200 focus:outline-none
-                                 ${currentStyle === style.name ? 'bg-gray-200' : ''}`}
+                                 ${
+                                   currentStyle === style.name
+                                     ? "bg-gray-200"
+                                     : ""
+                                 }`}
                     >
                       {style.style}
                     </button>
@@ -1393,7 +1591,9 @@ export default function Terminal() {
                       key={emoticon.face}
                       onClick={() => handleEmoticonClick(emoticon.face)}
                       className={`flex flex-col items-center ${
-                        index === selectedIndex ? 'bg-gray-200 rounded-lg p-2' : 'p-2'
+                        index === selectedIndex
+                          ? "bg-gray-200 rounded-lg p-2"
+                          : "p-2"
                       }`}
                     >
                       <span className="text-2xl mb-2">{emoticon.face}</span>
@@ -1404,22 +1604,24 @@ export default function Terminal() {
               </div>
             )}
 
-            <div 
-              style={{ 
-                position: 'relative',
-                bottom: 'auto',
-                left: 'auto',
-                right: 'auto',
-                background: 'white',
+            <div
+              style={{
+                position: "relative",
+                bottom: "auto",
+                left: "auto",
+                right: "auto",
+                background: "white",
                 zIndex: 40,
-                borderTop: '1px solid #ccc',
-                width: '100%',
+                borderTop: "1px solid #ccc",
+                width: "100%",
                 flexShrink: 0, // Prevent shrinking
               }}
             >
               <div className="border-t-2 border-gray-800 bg-gray-100 p-3 sm:p-4 font-mono">
                 <div className="text-gray-800 flex items-center min-h-[44px] relative">
-                  <div className="text-sm sm:text-base w-full">{getInputDisplay()}</div>
+                  <div className="text-sm sm:text-base w-full">
+                    {getInputDisplay()}
+                  </div>
                   <input
                     ref={inputRef}
                     type="text"
@@ -1428,17 +1630,16 @@ export default function Terminal() {
                       const newValue = e.target.value;
                       const lastChar = newValue[newValue.length - 1];
                       const prevChar = input[input.length - 1];
-                      
+
                       // Prevent duplicate characters for both mobile and desktop
                       if (newValue === input + prevChar) {
                         return;
                       }
-                      
+
                       setInput(newValue);
-                      setIsInputFocused(newValue.length > 0);
                     }}
-                    onFocus={() => setIsInputFocused(true)}
-                    onBlur={() => setIsInputFocused(false)}
+                    onFocus={() => {}}
+                    onBlur={() => {}}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-text"
                     autoComplete="off"
                     autoCorrect="off"
@@ -1461,12 +1662,12 @@ export default function Terminal() {
                       }}
                       className={`w-full px-2 py-1 text-gray-800 text-xs font-mono focus:outline-none 
                                flex items-center justify-center ${
-                                 (button === 'STYLE' && showStyles) ||
-                                 (button === 'EMOJIS' && showEmotes) ||
-                                 (button === 'TAG' && showTags)
-                                   ? 'bg-gray-200'
-                                   : ''
-                                 }`}
+                                 (button === "STYLE" && showStyles) ||
+                                 (button === "EMOJIS" && showEmotes) ||
+                                 (button === "TAG" && showTags)
+                                   ? "bg-gray-200"
+                                   : ""
+                               }`}
                     >
                       [{getStyledMenuText(button)}]
                     </button>
@@ -1481,5 +1682,5 @@ export default function Terminal() {
         )}
       </div>
     </div>
-  )
+  );
 }
